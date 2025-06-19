@@ -7,18 +7,17 @@ using code = vision::code;
 // A global instance of brain used for printing to the V5 Brain screen
 brain  Brain;
 
-// VEXcode device constructors
 controller Controller1 = controller(primary);
-motor LeftDriveSmart = motor(PORT1, ratio18_1, false);
-motor RightDriveSmart = motor(PORT10, ratio18_1, true);
-gyro TurnGyroSmart = gyro(Brain.ThreeWirePort.D);
-smartdrive Drivetrain= smartdrive(LeftDriveSmart, RightDriveSmart, TurnGyroSmart, 319.19, 320, 130, mm, 1);
-motor ClawMotor = motor(PORT3, ratio18_1, false);
-motor ArmMotor = motor(PORT8, ratio18_1, false);
-
+motor fl = motor(PORT1, ratio18_1, true);
+motor flc = motor(PORT2, ratio18_1, true);
+motor blc = motor(PORT3, ratio18_1, true);
+motor bl = motor(PORT4, ratio18_1, true);
+motor fr = motor(PORT5, ratio18_1 false);
+motor frc = motor(PORT6, ratio18_1 false);
+motor brc = motor(PORT7, ratio18_1 false);
+motor br = motor (PORT8, ratio18_1 false);
+motor intake = motor(PORT9, ratio18_1 false)
 // VEXcode generated functions
-
-
 
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.

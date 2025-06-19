@@ -58,7 +58,112 @@ void autonomous(void) {
   // Insert autonomous user code here.
   // ..........................................................................
 }
+void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
+  fl.spin(forward, SpeedLeft + SpeedRight, percent);
+  flc.spin(forward, SpeedLeft + SpeedRight, percent);
+  blc.spin(forward, SpeedLeft + SpeedRight, percent);
+  bl.spin(forward, SpeedLeft + SpeedRight, percent);
+  
+  fr.spin(reverse, SpeedLeft - SpeedRight, percent);
+  frc.spin(reverse, SpeedLeft - SpeedRight, percent);
+  brc.spin(reverse, SpeedLeft - SpeedRight, percent);
+  br.spin(forward, SpeedLeft + SpeedRight, percent);
+  }
+  
+  //turn left
+  void turnLeft(double angle) {
+  // basically the same as right except left motor spins reverse and right is forward
+  inertialSensor.setRotation(0, degrees);
+  
+  //turning left using inertial sensor
+  while (fabs(inertialSensor.rotation(deg)) < angle) {
+    double diff =  angle - fabs(inertialSensor.rotation(deg));
+    // 5 + diff * 0.3 ,pct means to slow down when reaching the precent target.
+    //You have to remember to set the minimum speed to 5 so it does not slowly move
+    fl.spin(reverse, 5 + diff * 0.3, pct);
+    flc.spin(reverse, 5 + diff * 0.3, pct);
+    blc.spin(reverse, 5 + diff * 0.3, pct);
+    bl.spin(forward, 5 + diff * 0.3, pct);
+    
+    fr.spin(forward, 5 + diff * 0.3, pct);
+    frc.spin(forward, 5 + diff * 0.3, pct);
+    brc.spin(forward, 5 + diff * 0.3, pct);
+    br.spin(forward, 5 + diff * 0.3, pct);
+   
+    wait(5, msec);
+  }
+  stopWheels();
+  }
+  
+  
+  //turn right
+  void turnRight(double angle) {
+  // set inertial rotation to 0 degrees
+  inertialSensor.setRotation(0, degrees);
+  //turn right using inertial sensors
+  while (inertialSensor.rotation(deg) < angle) {
+    double diff =  angle - fabs(inertialSensor.rotation(deg));
+    fl.spin(forward, 5 + diff * 0.3, pct);
+    flc.spin(forward, 5 + diff * 0.3, pct);
+    blc.spin(forward, 5 + diff * 0.3, pct);
+    bl.spin(forward, 5 + diff * 0.3, pct);
 
+    fr.spin(reverse, 5 + diff * 0.3, pct);
+    frc.spin(reverse, 5 + diff * 0.3, pct);
+    brc.spin(reverse, 5 + diff * 0.3, pct);
+    br.spin(forward, 5 + diff * 0.3, pct);
+
+    wait(5, msec);
+  }
+  stopWheels();
+  }
+  
+  void stopWheels () {
+   fl.stop(brake);
+   flc.stop(brake);
+   blc.stop(brake);
+   bl.stop(brake);
+
+   fr.stop(brake);
+   frc.stop(brake);
+   brc.stop(brake);
+   br.stop(brake);
+  }
+  
+  //set velocity
+  void setVelocity(double vel) {
+   // set all motors to velocity value of 'vel'
+   fl.setVelocity(vel, percent);
+   flc.setVelocity(vel, percent);
+   blc.setVelocity(vel, percent);
+   bl.setVelocity(vel, percent);
+
+   fr.setVelocity(vel, percent);
+   frc.setVelocity(vel, percent);
+   brc.setVelocity(vel, percent);
+   br.setVelocity(vel, percent);
+
+  }
+  // fast arcade
+void fast_arcade() {
+  //Slower
+  // int speedleft = controller1.Axis1.value()/2;
+  // int speedright = controller1.Axis3.value()/2;
+  // search up the ebot pilons tur`ning curves(or something like that) desmos
+  
+  double speedleft = controller1.Axis1.value() + controller1.Axis3.value();
+  double speedright = controller1.Axis1.value() - controller1.Axis3.value();
+  
+  fl.spin(forward, speedleft, percent);
+  ml.spin(forward, speedleft, percent);
+  bl.spin(forward, speedleft, percent);
+  
+  // RIGHT MOTORS ARE REVERSED SO FORWARD = REVERSE!!!!!!!!!
+  fr.spin(reverse, speedright, percent);
+  mr.spin(reverse, speedright, percent);
+  br.spin(reverse, speedright, percent);
+  }
+  
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
 /*                              User Control Task                            */
@@ -72,6 +177,7 @@ void autonomous(void) {
 void usercontrol(void) {
   // User control code here, inside the loop
   while (1) {
+    fast_arcade();
     // This is the main execution loop for the user control program.
     // Each time through the loop your program should update motor + servo
     // values based on feedback from the joysticks.
