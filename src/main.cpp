@@ -69,7 +69,19 @@ void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
   brc.spin(reverse, SpeedLeft - SpeedRight, percent);
   br.spin(forward, SpeedLeft + SpeedRight, percent);
   }
-  
+
+  void stopWheels () {
+    fl.stop(brake);
+    flc.stop(brake);
+    blc.stop(brake);
+    bl.stop(brake);
+ 
+    fr.stop(brake);
+    frc.stop(brake);
+    brc.stop(brake);
+    br.stop(brake);
+   }
+
   //turn left
   void turnLeft(double angle) {
   // basically the same as right except left motor spins reverse and right is forward
@@ -118,18 +130,6 @@ void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
   stopWheels();
   }
   
-  void stopWheels () {
-   fl.stop(brake);
-   flc.stop(brake);
-   blc.stop(brake);
-   bl.stop(brake);
-
-   fr.stop(brake);
-   frc.stop(brake);
-   brc.stop(brake);
-   br.stop(brake);
-  }
-  
   //set velocity
   void setVelocity(double vel) {
    // set all motors to velocity value of 'vel'
@@ -144,8 +144,8 @@ void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
    br.setVelocity(vel, percent);
 
   }
-  // fast arcade
-void fast_arcade() {
+  //arcade
+void arcade() {
   //Slower
   // int speedleft = controller1.Axis1.value()/2;
   // int speedright = controller1.Axis3.value()/2;
@@ -155,12 +155,14 @@ void fast_arcade() {
   double speedright = controller1.Axis1.value() - controller1.Axis3.value();
   
   fl.spin(forward, speedleft, percent);
-  ml.spin(forward, speedleft, percent);
+  flc.spin(forward, speedleft, percent);
+  blc.spin(forward, speedleft, percent);
   bl.spin(forward, speedleft, percent);
   
   // RIGHT MOTORS ARE REVERSED SO FORWARD = REVERSE!!!!!!!!!
   fr.spin(reverse, speedright, percent);
-  mr.spin(reverse, speedright, percent);
+  frc.spin(reverse, speedright, percent);  
+  brc.spin(reverse, speedright, percent);
   br.spin(reverse, speedright, percent);
   }
   
@@ -177,7 +179,7 @@ void fast_arcade() {
 void usercontrol(void) {
   // User control code here, inside the loop
   while (1) {
-    fast_arcade();
+    arcade();
     // This is the main execution loop for the user control program.
     // Each time through the loop your program should update motor + servo
     // values based on feedback from the joysticks.

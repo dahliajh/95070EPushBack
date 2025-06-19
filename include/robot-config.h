@@ -13,6 +13,7 @@ extern motor frc;
 extern motor brc;
 extern motor br;
 extern motor intake;
+extern inertial inertialSensor;
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.
  * 
