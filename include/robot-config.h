@@ -5,12 +5,10 @@ extern brain Brain;
 // VEXcode devices
 extern controller controller1;
 extern motor fl;
-extern motor flc;
-extern motor blc;
+extern motor ml;
 extern motor bl;
 extern motor fr;
-extern motor frc;
-extern motor brc;
+extern motor mr;
 extern motor br;
 extern motor intake;
 extern inertial inertialSensor;

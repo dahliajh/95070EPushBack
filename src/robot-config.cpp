@@ -8,16 +8,14 @@ using code = vision::code;
 brain  Brain;
 
 controller controller1 = controller(primary);
-motor fl = motor(PORT1, ratio18_1, true);
-motor flc = motor(PORT2, ratio18_1, true);
-motor blc = motor(PORT3, ratio18_1, true);
+motor fl = motor(PORT6, ratio18_1, true);
+motor ml = motor(PORT5, ratio18_1, true);
 motor bl = motor(PORT4, ratio18_1, true);
-motor fr = motor(PORT5, ratio18_1, false);
-motor frc = motor(PORT6, ratio18_1, false);
-motor brc = motor(PORT7, ratio18_1, false);
-motor br = motor (PORT8, ratio18_1, false);
+motor fr = motor(PORT1, ratio18_1, false);
+motor mr = motor(PORT2, ratio18_1, false);
+motor br = motor (PORT3, ratio18_1, false);
 motor intake = motor(PORT9, ratio18_1, false);
-inertial inertialSensor = inertial(PORT10);
+inertial inertialSensor = inertial(PORT11);
 // VEXcode generated functions
 
 /**

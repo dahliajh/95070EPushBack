@@ -35,14 +35,6 @@ competition Competition;
 /*  not every time that the robot is disabled.                               */
 /*---------------------------------------------------------------------------*/
 
-void pre_auton(void) {
-  // Initializing Robot Configuration. DO NOT REMOVE!
-  vexcodeInit();
-  
-  // All activities that occur before the competition starts
-  // Example: clearing encoders, setting servo positions, ...
-}
-
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
 /*                              Autonomous Task                              */
@@ -53,32 +45,74 @@ void pre_auton(void) {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
-void autonomous(void) {
-  // ..........................................................................
-  // Insert autonomous user code here.
-  // ..........................................................................
+
+// PID
+double kp = 0.175;
+double ki = 0;
+double kd = 0;
+
+void pid(double targetDistance) {
+ double error = targetDistance;
+ double integral = 0;
+ double lastError =  targetDistance;
+ double prevDistanceError = fl.position(degrees);
+ fl.setPosition(0, degrees);
+ ml.setPosition(0, degrees);
+ bl.setPosition(0, degrees);
+ fr.setPosition(0, degrees);
+ mr.setPosition(0, degrees);
+ br.setPosition(0, degrees);
+ while (true) {
+   double measureDistance = (fl.position(degrees) + fr.position(degrees))/2;
+   error = targetDistance - measureDistance;
+   prevDistanceError = measureDistance;
+   if (fabs(error)<30) {
+     fl.stop(brake);
+     ml.stop(brake);
+     bl.stop(brake);
+
+     fr.stop(brake);
+     mr.stop(brake);
+     br.stop(brake);
+     return;
+   }
+   double speed = error * kp + integral * ki + (error - lastError) * kd;
+   fl.spin(fwd, speed, percent);
+   ml.spin(fwd, speed, percent);
+   bl.spin(fwd, speed, percent);
+
+   fr.spin(fwd, speed, percent);
+   mr.spin(fwd, speed, percent);
+   br.spin(fwd, speed, percent);
+
+   lastError = error;
+   wait(15, msec);
+ }
 }
+// PID to inches
+#define INCHES_TO_DEGREES 90/5
+void pid_inches (double DistanceInInches) {
+ double degrees = DistanceInInches * INCHES_TO_DEGREES;
+ pid(degrees);
+}
+
 void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
-  fl.spin(forward, SpeedLeft + SpeedRight, percent);
-  flc.spin(forward, SpeedLeft + SpeedRight, percent);
-  blc.spin(forward, SpeedLeft + SpeedRight, percent);
-  bl.spin(forward, SpeedLeft + SpeedRight, percent);
+  fl.spin(reverse, SpeedLeft + SpeedRight, percent);
+  ml.spin(reverse, SpeedLeft + SpeedRight, percent);
+  bl.spin(reverse, SpeedLeft + SpeedRight, percent);
   
-  fr.spin(reverse, SpeedLeft - SpeedRight, percent);
-  frc.spin(reverse, SpeedLeft - SpeedRight, percent);
-  brc.spin(reverse, SpeedLeft - SpeedRight, percent);
+  fr.spin(forward, SpeedLeft - SpeedRight, percent);
+  mr.spin(forward, SpeedLeft - SpeedRight, percent);
   br.spin(forward, SpeedLeft + SpeedRight, percent);
   }
 
   void stopWheels () {
     fl.stop(brake);
-    flc.stop(brake);
-    blc.stop(brake);
+    ml.stop(brake);
     bl.stop(brake);
  
     fr.stop(brake);
-    frc.stop(brake);
-    brc.stop(brake);
+    mr.stop(brake);
     br.stop(brake);
    }
 
@@ -93,13 +127,11 @@ void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
     // 5 + diff * 0.3 ,pct means to slow down when reaching the precent target.
     //You have to remember to set the minimum speed to 5 so it does not slowly move
     fl.spin(reverse, 5 + diff * 0.3, pct);
-    flc.spin(reverse, 5 + diff * 0.3, pct);
-    blc.spin(reverse, 5 + diff * 0.3, pct);
+    ml.spin(reverse, 5 + diff * 0.3, pct);
     bl.spin(forward, 5 + diff * 0.3, pct);
     
     fr.spin(forward, 5 + diff * 0.3, pct);
-    frc.spin(forward, 5 + diff * 0.3, pct);
-    brc.spin(forward, 5 + diff * 0.3, pct);
+    mr.spin(forward, 5 + diff * 0.3, pct);
     br.spin(forward, 5 + diff * 0.3, pct);
    
     wait(5, msec);
@@ -116,14 +148,12 @@ void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
   while (inertialSensor.rotation(deg) < angle) {
     double diff =  angle - fabs(inertialSensor.rotation(deg));
     fl.spin(forward, 5 + diff * 0.3, pct);
-    flc.spin(forward, 5 + diff * 0.3, pct);
-    blc.spin(forward, 5 + diff * 0.3, pct);
+    ml.spin(forward, 5 + diff * 0.3, pct);
     bl.spin(forward, 5 + diff * 0.3, pct);
 
     fr.spin(reverse, 5 + diff * 0.3, pct);
-    frc.spin(reverse, 5 + diff * 0.3, pct);
-    brc.spin(reverse, 5 + diff * 0.3, pct);
-    br.spin(forward, 5 + diff * 0.3, pct);
+    mr.spin(reverse, 5 + diff * 0.3, pct);
+    br.spin(reverse, 5 + diff * 0.3, pct);
 
     wait(5, msec);
   }
@@ -134,38 +164,73 @@ void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
   void setVelocity(double vel) {
    // set all motors to velocity value of 'vel'
    fl.setVelocity(vel, percent);
-   flc.setVelocity(vel, percent);
-   blc.setVelocity(vel, percent);
+   ml.setVelocity(vel, percent);
    bl.setVelocity(vel, percent);
 
    fr.setVelocity(vel, percent);
-   frc.setVelocity(vel, percent);
-   brc.setVelocity(vel, percent);
+   mr.setVelocity(vel, percent);
    br.setVelocity(vel, percent);
 
   }
-  //arcade
-void arcade() {
-  //Slower
-  // int speedleft = controller1.Axis1.value()/2;
-  // int speedright = controller1.Axis3.value()/2;
-  // search up the ebot pilons tur`ning curves(or something like that) desmos
-  
-  double speedleft = controller1.Axis1.value() + controller1.Axis3.value();
-  double speedright = controller1.Axis1.value() - controller1.Axis3.value();
-  
-  fl.spin(forward, speedleft, percent);
-  flc.spin(forward, speedleft, percent);
-  blc.spin(forward, speedleft, percent);
-  bl.spin(forward, speedleft, percent);
-  
-  // RIGHT MOTORS ARE REVERSED SO FORWARD = REVERSE!!!!!!!!!
-  fr.spin(reverse, speedright, percent);
-  frc.spin(reverse, speedright, percent);  
-  brc.spin(reverse, speedright, percent);
-  br.spin(reverse, speedright, percent);
+
+  void simpletestauton () {
+    pid_inches(35);
+    turnLeft(87);
+    wait(0.5, sec);
+    stopWheels();
+    pid_inches(25);
+    turnRight(87);
+    wait(0.5,sec);
+    stopWheels();
+    pid_inches(35);
+    turnLeft(87);
+    pid_inches(10);
+    turnRight(87);
+    pid_inches(40);
+    turnLeft(170);
+  }
+  void blueright () { 
+    controller1.Screen.print("Its a me mario");
   }
   
+  int auton = 1;
+//auton selector
+void autonselector() {
+  int numofautons = 2;
+  if (controller1.ButtonX.pressing()) {
+    auton++;
+    wait(200,msec);
+  } else if (controller1.ButtonB.pressing()) {
+    auton--;
+    wait(200,msec);
+  }
+  if (auton > numofautons) {
+    auton = 1;
+  } else if (auton < 1) {
+    auton = numofautons;
+  }
+ 
+  if (auton == 1) {
+    controller1.Screen.clearScreen();
+    controller1.Screen.setCursor(2,9);
+    controller1.Screen.print("Blue Right");
+  } else if (auton == 2) {
+    controller1.Screen.clearScreen();
+    controller1.Screen.setCursor(2,4);
+    controller1.Screen.print("Simple Test Auton");
+  } 
+ }
+ 
+ // auton
+ void autonomous(void) {
+  controller1.Screen.print(" autons");
+  if (auton == 1) {
+    blueright();
+  } else if (auton == 2){
+    simpletestauton();
+  } 
+ }
+
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
 /*                              User Control Task                            */
@@ -176,22 +241,48 @@ void arcade() {
 /*  You must modify the code to add your own robot specific commands here.   */
 /*---------------------------------------------------------------------------*/
 
+//arcade code
+void arcade() {
+  //Slower
+  // int speedleft = controller1.Axis1.value()/2;
+  // int speedright = controller1.Axis3.value()/2;
+  // search up the ebot pilons tur`ning curves(or something like that) desmos
+  
+  double speedleft = controller1.Axis1.value() + controller1.Axis3.value();
+  double speedright = controller1.Axis1.value() - controller1.Axis3.value();
+  
+  fl.spin(forward, speedleft, percent);
+  ml.spin(forward, speedleft, percent);
+  bl.spin(forward, speedleft, percent);
+  
+  // RIGHT MOTORS ARE REVERSED SO FORWARD = REVERSE!!!!!!!!!
+  fr.spin(reverse, speedright, percent);
+  mr.spin(reverse, speedright, percent);  
+  br.spin(reverse, speedright, percent);
+  }
+
 void usercontrol(void) {
   // User control code here, inside the loop
   while (1) {
     arcade();
-    // This is the main execution loop for the user control program.
-    // Each time through the loop your program should update motor + servo
-    // values based on feedback from the joysticks.
-
-    // ........................................................................
-    // Insert user code here. This is where you use the joystick values to
-    // update your motors, etc.
-    // ........................................................................
-
     wait(20, msec); // Sleep the task for a short amount of time to
-                    // prevent wasted resources.
   }
+}
+
+bool selecting = 1;
+void pre_auton(void) {
+  // Initializing Robot Configuration. DO NOT REMOVE!
+  vexcodeInit();
+  inertialSensor.calibrate();
+  wait(5, msec);
+  waitUntil(!inertialSensor.isCalibrating());
+  while (selecting) {
+    autonselector();
+   // if (controller1.ButtonB.pressing()) selecting = 0;
+    wait(5, msec);
+  }
+  // All activities that occur before the competition starts
+  // Example: clearing encoders, setting servo positions, ...
 }
 
 //
@@ -199,11 +290,11 @@ void usercontrol(void) {
 //
 int main() {
   // Set up callbacks for autonomous and driver control periods.
+  pre_auton();
   Competition.autonomous(autonomous);
   Competition.drivercontrol(usercontrol);
 
   // Run the pre-autonomous function.
-  pre_auton();
 
   // Prevent main from exiting with an infinite loop.
   while (true) {
