@@ -17,6 +17,7 @@
 // ---- END VEXCODE CONFIGURED DEVICES ----
 
 #include "vex.h"
+#include "robot-config.h"
 
 using namespace vex;
 
@@ -89,6 +90,7 @@ void pid(double targetDistance) {
    wait(15, msec);
  }
 }
+
 // PID to inches
 #define INCHES_TO_DEGREES 90/5
 void pid_inches (double DistanceInInches) {
@@ -96,7 +98,51 @@ void pid_inches (double DistanceInInches) {
  pid(degrees);
 }
 
-void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
+double tkp = 0.5;
+double tki = 0.7;
+double tkd = 0.5;
+
+//turn pid
+void turnpid (double targetDistance) {
+  double error = targetDistance;
+  double integral = 0;
+  double lastError =  targetDistance;
+  double prevDistanceError = fl.position(degrees);
+  fl.setPosition(0, degrees);
+  ml.setPosition(0, degrees);
+  bl.setPosition(0, degrees);
+  fr.setPosition(0, degrees);
+  mr.setPosition(0, degrees);
+  br.setPosition(0, degrees);
+  while (true) {
+    double measureDistance = (fl.position(degrees) + fr.position(degrees))/2;
+    error = targetDistance - measureDistance;
+    prevDistanceError = measureDistance;
+    if (fabs(error)<30) {
+      fl.stop(brake);
+      ml.stop(brake);
+      bl.stop(brake);
+ 
+      fr.stop(brake);
+      mr.stop(brake);
+      br.stop(brake);
+      return;
+    }
+    double speed = error * kp + integral * ki + (error - lastError) * kd;
+    fl.spin(fwd, speed, percent);
+    ml.spin(fwd, speed, percent);
+    bl.spin(fwd, speed, percent);
+ 
+    fr.spin(reverse, speed, percent);
+    mr.spin(reverse, speed, percent);
+    br.spin(reverse, speed, percent);
+ 
+    lastError = error;
+    wait(20, msec);
+  }
+}
+
+void moveAllWheels(int SpeedLeft, int SpeedRight) {
   fl.spin(reverse, SpeedLeft + SpeedRight, percent);
   ml.spin(reverse, SpeedLeft + SpeedRight, percent);
   bl.spin(reverse, SpeedLeft + SpeedRight, percent);
@@ -104,23 +150,22 @@ void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
   fr.spin(forward, SpeedLeft - SpeedRight, percent);
   mr.spin(forward, SpeedLeft - SpeedRight, percent);
   br.spin(forward, SpeedLeft + SpeedRight, percent);
-  }
+}
 
-  void stopWheels () {
-    fl.stop(brake);
-    ml.stop(brake);
-    bl.stop(brake);
- 
-    fr.stop(brake);
-    mr.stop(brake);
-    br.stop(brake);
-   }
+void stopWheels () {
+  fl.stop(brake);
+  ml.stop(brake);
+  bl.stop(brake);
+
+  fr.stop(brake);
+  mr.stop(brake);
+  br.stop(brake);
+}
 
   //turn left
   void turnLeft(double angle) {
   // basically the same as right except left motor spins reverse and right is forward
   inertialSensor.setRotation(0, degrees);
-  
   //turning left using inertial sensor
   while (fabs(inertialSensor.rotation(deg)) < angle) {
     double diff =  angle - fabs(inertialSensor.rotation(deg));
@@ -140,8 +185,8 @@ void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
   }
   
   
-  //turn right
-  void turnRight(double angle) {
+//turn right
+void turnRight(double angle) {
   // set inertial rotation to 0 degrees
   inertialSensor.setRotation(0, degrees);
   //turn right using inertial sensors
@@ -158,42 +203,43 @@ void moveAllWheels(int SpeedLeft, int SpeedRight, int ) {
     wait(5, msec);
   }
   stopWheels();
-  }
+}
   
-  //set velocity
-  void setVelocity(double vel) {
-   // set all motors to velocity value of 'vel'
-   fl.setVelocity(vel, percent);
-   ml.setVelocity(vel, percent);
-   bl.setVelocity(vel, percent);
+//set velocity
+void setVelocity(double vel) {
+  // set all motors to velocity value of 'vel'
+  fl.setVelocity(vel, percent);
+  ml.setVelocity(vel, percent);
+  bl.setVelocity(vel, percent);
 
-   fr.setVelocity(vel, percent);
-   mr.setVelocity(vel, percent);
-   br.setVelocity(vel, percent);
+  fr.setVelocity(vel, percent);
+  mr.setVelocity(vel, percent);
+  br.setVelocity(vel, percent);
+}
 
-  }
+void simpletestauton () {
+  pid_inches(10);
+  turnpid(90);
+  pid_inches(10);
+}
+void blueright () { 
 
-  void simpletestauton () {
-    pid_inches(35);
-    turnLeft(87);
-    wait(0.5, sec);
-    stopWheels();
-    pid_inches(25);
-    turnRight(87);
-    wait(0.5,sec);
-    stopWheels();
-    pid_inches(35);
-    turnLeft(87);
-    pid_inches(10);
-    turnRight(87);
-    pid_inches(40);
-    turnLeft(170);
-  }
-  void blueright () { 
-    controller1.Screen.print("Its a me mario");
-  }
-  
-  int auton = 1;
+}
+
+void blueleft () {
+
+}
+
+void redright () {
+
+}
+
+void redleft () {
+
+}
+
+ 
+int auton = 1;
 //auton selector
 void autonselector() {
   int numofautons = 2;
@@ -219,17 +265,17 @@ void autonselector() {
     controller1.Screen.setCursor(2,4);
     controller1.Screen.print("Simple Test Auton");
   } 
- }
+}
  
  // auton
- void autonomous(void) {
+void autonomous(void) {
   controller1.Screen.print(" autons");
   if (auton == 1) {
     blueright();
   } else if (auton == 2){
     simpletestauton();
   } 
- }
+}
 
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
@@ -265,7 +311,7 @@ void usercontrol(void) {
   // User control code here, inside the loop
   while (1) {
     arcade();
-    wait(20, msec); // Sleep the task for a short amount of time to
+    wait(20, msec); 
   }
 }
 
