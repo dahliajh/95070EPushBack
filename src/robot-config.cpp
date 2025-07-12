@@ -9,14 +9,17 @@ using code = vision::code;
 brain  Brain;
 
 controller controller1 = controller(primary);
-motor fl = motor(PORT6, ratio18_1, true);
-motor ml = motor(PORT5, ratio18_1, true);
-motor bl = motor(PORT4, ratio18_1, true);
-motor fr = motor(PORT1, ratio18_1, false);
-motor mr = motor(PORT2, ratio18_1, false);
-motor br = motor (PORT3, ratio18_1, false);
-motor intake = motor(PORT9, ratio18_1, false);
-inertial inertialSensor = inertial(PORT11);
+motor fl = motor(PORT19, ratio6_1, false); 
+motor ml = motor(PORT20, ratio6_1, false); 
+motor bl = motor(PORT10, ratio6_1, false); 
+motor fr = motor(PORT12, ratio6_1, true); 
+motor mr = motor(PORT11, ratio6_1, true); 
+motor br = motor (PORT2, ratio6_1, true); 
+motor intake = motor(PORT6, ratio6_1, true); // bottom and middle intake
+motor intake2 = motor(PORT9, ratio18_1, true); // top intake
+motor intake3 = motor(PORT7, ratio18_1, true); // inside intake
+inertial inertialSensor = inertial(PORT1); 
+
 // VEXcode generated functions
 
 /**
@@ -29,8 +32,8 @@ void vexcodeInit( void ) {
   Brain.Screen.setCursor(2, 1);
   // calibrate the drivetrain gyro
   wait(200, msec);
-  //TurnGyroSmart.startCalibration(1);
-  Brain.Screen.print("Calibrating Gyro for Drivetrain");
+  // TurnGyroSmart.startCalibration(1);
+  // Brain.Screen.print("Calibrating Gyro for Drivetrain");
   // wait for the gyro calibration process to finish
   // while (TurnGyroSmart.isCalibrating()) {
   //   wait(25, msec);
