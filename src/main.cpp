@@ -49,9 +49,9 @@ competition Competition;
 
 
 // PID
-double kp = 0.175;
-double ki = 0;
-double kd = 0;
+double kp = 0.15; // tune this first
+double ki = 0.15; // and lastly this
+double kd = 0.13; // then this 
 
 void pid(double targetDistance) {
  double error = targetDistance;
@@ -98,21 +98,22 @@ void pid_inches (double DistanceInInches) {
  pid(degrees);
 }
 
-double tkp = 0.5;
-double tki = 0.7;
-double tkd = 0.5;
+double tkp = 0.3; //tune this first
+double tki = 0; //and lastly this
+double tkd = 0.35; //then this
 
 //turn pid
-void turnpid (double targetAngle) {
+void turnpid_orig (double targetAngle) {
   double error = targetAngle;
   double integral = 0;
   double lastError =  targetAngle;
-  double prevDistanceError = fl.position(degrees);
   inertialSensor.setRotation(0, degrees);
   while (true) {
     double measureAngle = inertialSensor.rotation(degrees);
     error = targetAngle - measureAngle;
-    prevDistanceError = measureAngle;
+    while (error > 181) error -= 360;
+    while (error < -181) error += 360;
+
     if (fabs(error)<3) {
       fl.stop(brake);
       ml.stop(brake);
@@ -123,7 +124,7 @@ void turnpid (double targetAngle) {
       br.stop(brake);
       return;
     }
-    double speed = error * kp + integral * ki + (error - lastError) * kd;
+    double speed = error * tkp + integral * tki + (error - lastError) * tkd;
     fl.spin(reverse, speed, percent);
     ml.spin(reverse, speed, percent);
     bl.spin(reverse, speed, percent);
@@ -138,6 +139,140 @@ void turnpid (double targetAngle) {
     std::cout<<"sensor: " << inertialSensor.rotation(degrees)<<std::endl;
   }
 }
+#include "vex.h"
+#include <cmath>
+
+void turnpid(double targetAngle) {
+
+  double error = 0;
+  double lastError = 0;
+  double integral = 0;
+  
+  // Optional: Add a timeout
+  vex::timer turnTimer;
+  turnTimer.clear();
+  double timeout = 3000; // 3-second timeout
+
+  while (true) {
+    double measureAngle = inertialSensor.rotation(degrees);
+    error = targetAngle - measureAngle;
+
+    // Correctly handle the 180-degree wrap-around for the shortest path
+    error = fmod(error + 180, 360) - 180;
+
+    if (fabs(error) < 1.0) { // Reduced tolerance for better accuracy
+      fl.stop(brake);
+      ml.stop(brake);
+      bl.stop(brake);
+      fr.stop(brake);
+      mr.stop(brake);
+      br.stop(brake);
+      return; 
+    }
+    
+    if (turnTimer.time(msec) > timeout) {
+      fl.stop(coast);
+      ml.stop(coast);
+      bl.stop(coast);
+      fr.stop(coast);
+      mr.stop(coast);
+      br.stop(coast);
+      return;
+    }
+    
+    //Accumulate error over time
+    integral += error;
+
+    if (fabs(error) > 10) { // Changed this to a smaller value for anti-windup
+      integral = 0; // Reset integral if the error is large
+    }
+
+    double derivative = error - lastError;
+    double speed = (error * tkp) + (integral * tki) + (derivative * tkd);
+
+    // Clamp the speed to prevent it from going over 100%
+    if (fabs(speed) > 100) {
+        speed = 100 * sin(speed);
+    }
+
+    // Spin the motors with adjusted directions based on the error
+    fl.spin(fwd, speed, percent);
+    ml.spin(fwd, speed, percent);
+    bl.spin(fwd, speed, percent);
+ 
+    fr.spin(fwd, -speed, percent); // Note the negative sign here
+    mr.spin(fwd, -speed, percent);
+    br.spin(fwd, -speed, percent);
+ 
+    lastError = error;
+    wait(20, msec);
+    std::cout<<"err: " << error<<std::endl;
+    std::cout<<"sensor: " << inertialSensor.rotation(degrees)<<std::endl;
+  }
+}
+// void turnpid(double targetAngle) {
+
+//   double error = targetAngle;
+//   double lastError = 0; // It's safer to initialize to 0
+//   double integral = 0;
+  
+//   // Optional: Add a timeout
+//   vex::timer turnTimer;
+//   turnTimer.clear();
+//   double timeout = 3000; // 3-second timeout
+
+//   while (true) {
+//     double measureAngle = inertialSensor.rotation(degrees);
+//     error = targetAngle - measureAngle;
+
+//     // This handles finding the shortest path to the angle (e.g., turning -90 instead of +270)
+//     while (error > 180) error -= 360;
+//     while (error < -180) error += 360;
+
+//     if (fabs(error) < 10) { 
+//       fl.stop(brake);
+//       ml.stop(brake);
+//       bl.stop(brake);
+//       fr.stop(brake);
+//       mr.stop(brake);
+//       br.stop(brake);
+//       return; 
+//     }
+    
+//     if (turnTimer.time(msec) > timeout) {
+//       fl.stop(coast);
+//       ml.stop(coast);
+//       bl.stop(coast);
+//       fr.stop(coast);
+//       mr.stop(coast);
+//       br.stop(coast);
+//       return;
+//     }
+    
+//     //Accumulate error over time
+//     integral += error;
+
+//     if (fabs(error) > 20) {
+//       integral = 0; // Reset integral if the error is large
+//     }
+
+//     double derivative = error - lastError;
+//     double speed = (error * tkp) + (integral * tki) + (derivative * tkd);
+
+//     fl.spin(reverse, speed, percent);
+//     ml.spin(reverse, speed, percent);
+//     bl.spin(reverse, speed, percent);
+ 
+//     fr.spin(forward, speed, percent);
+//     mr.spin(forward, speed, percent);
+//     br.spin(forward, speed, percent);
+ 
+//     lastError = error;
+//     wait(20, msec);
+//     std::cout<<"err: " << error<<std::endl;
+//     std::cout<<"sensor: " << inertialSensor.rotation(degrees)<<std::endl;
+//   }
+// }
 
 void moveAllWheels(int SpeedLeft, int SpeedRight) {
   fl.spin(reverse, SpeedLeft + SpeedRight, percent);
@@ -214,7 +349,7 @@ void setVelocity(double vel) {
   br.setVelocity(vel, percent);
 }
 // intaking bottom and middle and outtaking inside intake
-void intaking() {
+/*void intaking() {
   if (controller1.ButtonR1.pressing()) {
   intake.spin(forward, 85, pct);
   intake3.spin(reverse, 85, pct);
@@ -227,9 +362,98 @@ void intaking() {
   intake.stop(coast);
   intake3.stop(coast);
   }
-}   
+} */
+ 
+ //Scoring Middle Goal  
+// void scoreMiddle () {
+//   if (controller1.ButtonR1.pressing()) {
+//     intake.spin(forward, 85, pct);
+//     intake3.spin(reverse, 85, pct);
+//     intake2.spin(reverse, 85, pct);
+
+//   }
+//     else {
+//     intake.stop(brake);
+//     intake3.stop(brake);
+//     intake2.stop(brake);
+//   }
+// }
+// //Scoring Top Goal
+// void scoreHigh () {
+//   if (controller1.ButtonR2.pressing()) {
+//     intake.spin(forward, 85, pct);
+//     intake3.spin(reverse, 85, pct);
+//     intake2.spin(forward, 85, pct);
+
+//   }
+//     else {
+//     intake.stop(brake);
+//     intake3.stop(brake);
+//     intake2.stop(brake);
+//   }
+// }
+//Scoring Basket
+// void scoreBasket () {
+//   if (controller1.ButtonL1.pressing()) {
+//     intake.spin(forward, 85, pct);
+//     intake3.spin(forward, 85, pct);
+  
+//   }
+//     else {
+//     intake.stop(brake);
+//     intake3.stop(brake);
+//   }
+// }
+//Scoring Low
+// void scoreLow () {
+//   if (controller1.ButtonL2.pressing()) {
+//     intake.spin(reverse, 85, pct);
+//     intake3.spin(forward, 85, pct);
+//   }
+//     else {
+//     intake.stop(brake);
+//     intake3.stop(brake);
+//   }
+// }
+
+void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
+   // score middle
+  if (controller1.ButtonR1.pressing()) { 
+    intake.spin(forward, 85, pct);
+    intake3.spin(reverse, 85, pct);
+    intake2.spin(reverse, 85, pct);
+
+  }
+
+// score high
+    else if (controller1.ButtonR2.pressing()) {  
+    intake.spin(forward, 85, pct);
+    intake3.spin(reverse, 85, pct);
+    intake2.spin(forward, 85, pct);
+
+  }
+  
+// score in basket
+  else if (controller1.ButtonL1.pressing()) { 
+    intake.spin(forward, 85, pct);
+    intake3.spin(forward, 85, pct);
+  
+  }
+
+ //score bottom
+    else if (controller1.ButtonL2.pressing()) {
+    intake.spin(reverse, 85, pct);
+    intake3.spin(forward, 85, pct);
+  }
+    else {
+    intake.stop(brake);
+    intake2.stop(brake);
+    intake3.stop(brake);
+  }
+}
+
 //intaking top intake
-void intaking2 () {
+void intaking2 () { //top intake
   if (controller1.ButtonL1.pressing()) {
     intake2.spin(forward, 85, pct);
 
@@ -269,8 +493,11 @@ void stopintake2 () {
   intake2.stop(coast);
 }
 
+
+
+
 void simpletestauton () {
-  pid(500);
+turnpid(180);
 }
 void blueright () { 
 
@@ -281,30 +508,44 @@ void blueleft () {
 }
 
 void redright () {
-  kp = 0.15;
-  pid_inches(-33);
-  wait(500, msec);
-  turnpid(-47);
-  wait(0.1, sec);
-  kp = 0.05;
-  pid_inches(-3);
-  runtopintake();
+//   kp = 0.1;
+//   runIntake();
+//   wait(0.25, sec);
+//   stopIntake();
+//   pid_inches(-18);
+//   kp = 0.06;
+//   pid_inches(-5);
+//   wait(0.1, sec);
+//   runIntake();
+//   wait(0.6, sec);
+//   stopIntake();
+//   pid_inches(10);
+//   tkp = 0.4;
+//   turnpid(90);
+//   wait(0.1, sec);
+//   pid_inches(-36);
+//   wait(0.2, sec);
+//   turnpid(344);
+//   pid_inches(-21.5);
+//   // pid_inches(-1);
+//   runtopintake();
+//   runIntake();
 }
 
 void redleft () {
-  pid_inches(40);
-  turnpid(90);
-}
+//  pid_inches(40);
+//   turnpid(90);
+ }
 
  
 int auton = 1;
 //auton selector
 void autonselector() {
   int numofautons = 5;
-  if (controller1.ButtonX.pressing()) {
+  if (controller1.ButtonRight.pressing()) {
     auton++;
     wait(200,msec);
-  } else if (controller1.ButtonB.pressing()) {
+  } else if (controller1.ButtonLeft.pressing()) {
     auton--;
     wait(200,msec);
   }
@@ -365,25 +606,35 @@ void autonomous(void) {
 //arcade code
 void arcade() {
 
-  double speedleft = controller1.Axis1.value() * 0.75 + controller1.Axis3.value() * 0.75;
-  double speedright = controller1.Axis1.value() * 0.75 - controller1.Axis3.value() * 0.75;
+  // double speedleft = controller1.Axis1.value() * 0.75 + controller1.Axis3.value() * 0.75;
+  // double speedright = controller1.Axis1.value() * 0.75 - controller1.Axis3.value() * 0.75;
+  
+  double axis1_value = controller1.Axis1.value();
+   if (controller1.Axis1.value() > -10 && controller1.Axis1.value() < 10)
+  { axis1_value = 0; }
+
+  double axis3_value = controller1.Axis3.value();
+   if (controller1.Axis3.value() > -10 && controller1.Axis3.value() < 10) 
+   {axis3_value = 0;}
+
+  double speedleft = axis1_value * 0.75 + axis3_value * 0.75;
+  double speedright = axis1_value * 0.75 - axis3_value * 0.75;
   
   // LEFT MOTORS ARE REVERSED SO FORWARD = REVERSE!!!!!!!!! 
-  fl.spin(reverse, speedleft, percent);
-  ml.spin(reverse, speedleft, percent);
-  bl.spin(reverse, speedleft, percent);
+  fl.spin(forward, speedleft, percent);
+  ml.spin(forward, speedleft, percent);
+  bl.spin(forward, speedleft, percent);
   
-  fr.spin(forward, speedright, percent);
-  mr.spin(forward, speedright, percent);  
-  br.spin(forward, speedright, percent);
-  }
+  fr.spin(reverse, speedright, percent);
+  mr.spin(reverse, speedright, percent);  
+  br.spin(reverse, speedright, percent);
+}
 
 void usercontrol(void) {
   // User control code here, inside the loop
   while (1) {
     arcade();
     intaking();
-    intaking2();
     wait(20, msec); 
   }
 }
@@ -392,6 +643,7 @@ bool selecting = 1;
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
   vexcodeInit();
+  inertialSensor.setRotation(0, degrees);
   inertialSensor.calibrate();
   wait(5, msec);
   waitUntil(!inertialSensor.isCalibrating());
