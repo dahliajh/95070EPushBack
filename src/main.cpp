@@ -69,13 +69,13 @@ void pid(double targetDistance) {
    error = targetDistance - measureDistance;
    prevDistanceError = measureDistance;
    if (fabs(error)<30) {
-     fl.stop(brake);
-     ml.stop(brake);
-     bl.stop(brake);
+     fl.stop(coast);
+     ml.stop(coast);
+     bl.stop(coast);
 
-     fr.stop(brake);
-     mr.stop(brake);
-     br.stop(brake);
+     fr.stop(coast);
+     mr.stop(coast);
+     br.stop(coast);
      return;
    }
    double speed = error * kp + integral * ki + (error - lastError) * kd;
@@ -440,10 +440,10 @@ void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
   
   }
 
- //score bottom
+ //score bottom/outtake
     else if (controller1.ButtonL2.pressing()) {
     intake.spin(reverse, 85, pct);
-    intake3.spin(forward, 85, pct);
+    intake3.spin(reverse, 85, pct);
   }
     else {
     intake.stop(brake);
@@ -494,8 +494,6 @@ void stopintake2 () {
 }
 
 
-
-
 void simpletestauton () {
 turnpid(180);
 }
@@ -508,28 +506,25 @@ void blueleft () {
 }
 
 void redright () {
-//   kp = 0.1;
-//   runIntake();
-//   wait(0.25, sec);
-//   stopIntake();
-//   pid_inches(-18);
-//   kp = 0.06;
-//   pid_inches(-5);
-//   wait(0.1, sec);
-//   runIntake();
-//   wait(0.6, sec);
-//   stopIntake();
-//   pid_inches(10);
-//   tkp = 0.4;
-//   turnpid(90);
-//   wait(0.1, sec);
-//   pid_inches(-36);
-//   wait(0.2, sec);
-//   turnpid(344);
-//   pid_inches(-21.5);
-//   // pid_inches(-1);
-//   runtopintake();
-//   runIntake();
+  kp = 0.067;
+  runIntake();
+  wait(0.25, sec);
+  stopIntake();
+  pid_inches(18);
+  pid_inches(5);
+  wait(0.1, sec);
+  runIntake();
+  wait(0.6, sec);
+  stopIntake();
+  // pid_inches(10);
+  // turnpid(180);
+  // wait(0.1, sec);
+  // pid_inches(36);
+  // wait(0.2, sec);
+  // turnpid(344);
+  // pid_inches(21.5);
+  // runtopintake();
+  // runIntake();
 }
 
 void redleft () {
