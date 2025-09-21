@@ -470,9 +470,9 @@ void runIntake () {
   intake3.spin(reverse, 90, pct);
 }
 
-void runOutake () {
-  intake.spin(reverse, 90, pct);
-  intake3.spin(forward, 90, pct);
+void runBasket () {
+  intake.spin(forward, 85, pct);
+  intake3.spin(forward, 85, pct);
 }
 
 void stopIntake () {
@@ -485,11 +485,8 @@ void runtopintake () {
   intake3.spin(reverse, 90, pct);
   intake2.spin(forward, 95, pct);
 }
-void runtopoutake () {
-  intake2.spin(reverse, 90, pct);
-}
 
-void stopintake2 () {
+void stoptopintake () {
   intake2.stop(coast);
 }
 
@@ -498,23 +495,11 @@ void simpletestauton () {
 turnpid(180);
 }
 void blueright () { 
-
-}
-
-void blueleft () {
-
-}
-
-void redright () {
-  kp = 0.067;
-  runIntake();
-  wait(0.25, sec);
-  stopIntake();
+  kp = 0.0567;
+  runBasket();
   pid_inches(18);
   pid_inches(5);
-  wait(0.1, sec);
-  runIntake();
-  wait(0.6, sec);
+  wait(0.7, sec);
   stopIntake();
   // pid_inches(10);
   // turnpid(180);
@@ -525,6 +510,14 @@ void redright () {
   // pid_inches(21.5);
   // runtopintake();
   // runIntake();
+}
+
+void blueleft () {
+  runIntake();
+}
+
+void redright () {
+
 }
 
 void redleft () {
