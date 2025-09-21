@@ -495,8 +495,18 @@ void simpletestauton () {
 turnpid(180);
 }
 void blueright () { 
-  kp = 0.0567;
-  runBasket();
+
+}
+
+void blueleft () {
+
+}
+
+void redright () {
+  kp = 0.067;
+  runIntake();
+  wait(0.25, sec);
+  stopIntake();
   pid_inches(18);
   pid_inches(5);
   wait(0.7, sec);
@@ -512,20 +522,12 @@ void blueright () {
   // runIntake();
 }
 
-void blueleft () {
-  runIntake();
-}
-
-void redright () {
-
-}
-
 void redleft () {
 //  pid_inches(40);
 //   turnpid(90);
  }
 
- 
+
 int auton = 1;
 //auton selector
 void autonselector() {
