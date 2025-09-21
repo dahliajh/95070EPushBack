@@ -27,9 +27,9 @@
 		{
 			"name": "Mac",
 			"includePath": [
-				"${vex_sdkIncludes}"
+				"/Users/dahliajha/95070EPushBack/include/"
 			],
-			"compilerPath": "${vex_compilerPath}",
+			"compilerPath": "/usr/bin/gcc",
 			"cStandard": "gnu99",
 			"cppStandard": "gnu++11",
 			"intelliSenseMode": "macos-clang-x86"
