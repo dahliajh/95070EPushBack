@@ -98,47 +98,47 @@ void pid_inches (double DistanceInInches) {
  pid(degrees);
 }
 
-double tkp = 0.3; //tune this first
+double tkp = 0.6; //tune this first
 double tki = 0; //and lastly this
-double tkd = 0.35; //then this
+double tkd = 0.25; //then this
 
-//turn pid
-void turnpid_orig (double targetAngle) {
-  double error = targetAngle;
-  double integral = 0;
-  double lastError =  targetAngle;
-  inertialSensor.setRotation(0, degrees);
-  while (true) {
-    double measureAngle = inertialSensor.rotation(degrees);
-    error = targetAngle - measureAngle;
-    while (error > 181) error -= 360;
-    while (error < -181) error += 360;
+// //turn pid
+// void turnpid_orig (double targetAngle) {
+//   double error = targetAngle;
+//   double integral = 0;
+//   double lastError =  targetAngle;
+//   inertialSensor.setRotation(0, degrees);
+//   while (true) {
+//     double measureAngle = inertialSensor.rotation(degrees);
+//     error = targetAngle - measureAngle;
+//     while (error > 181) error -= 360;
+//     while (error < -181) error += 360;
 
-    if (fabs(error)<3) {
-      fl.stop(brake);
-      ml.stop(brake);
-      bl.stop(brake);
+//     if (fabs(error)<3) {
+//       fl.stop(brake);
+//       ml.stop(brake);
+//       bl.stop(brake);
  
-      fr.stop(brake);
-      mr.stop(brake);
-      br.stop(brake);
-      return;
-    }
-    double speed = error * tkp + integral * tki + (error - lastError) * tkd;
-    fl.spin(reverse, speed, percent);
-    ml.spin(reverse, speed, percent);
-    bl.spin(reverse, speed, percent);
+//       fr.stop(brake);
+//       mr.stop(brake);
+//       br.stop(brake);
+//       return;
+//     }
+//     double speed = error * tkp + integral * tki + (error - lastError) * tkd;
+//     fl.spin(reverse, speed, percent);
+//     ml.spin(reverse, speed, percent);
+//     bl.spin(reverse, speed, percent);
  
-    fr.spin(forward, speed, percent);
-    mr.spin(forward, speed, percent);
-    br.spin(forward, speed, percent);
+//     fr.spin(forward, speed, percent);
+//     mr.spin(forward, speed, percent);
+//     br.spin(forward, speed, percent);
  
-    lastError = error;
-    wait(20, msec);
-    std::cout<<"err: " << error<<std::endl;
-    std::cout<<"sensor: " << inertialSensor.rotation(degrees)<<std::endl;
-  }
-}
+//     lastError = error;
+//     wait(20, msec);
+//     std::cout<<"err: " << error<<std::endl;
+//     std::cout<<"sensor: " << inertialSensor.rotation(degrees)<<std::endl;
+//   }
+// }
 #include "vex.h"
 #include <cmath>
 
@@ -194,7 +194,7 @@ void turnpid(double targetAngle) {
     if (fabs(speed) > 100) {
         speed = 100 * sin(speed);
     }
-
+    // Controller1.Screen.print
     // Spin the motors with adjusted directions based on the error
     fl.spin(fwd, speed, percent);
     ml.spin(fwd, speed, percent);
@@ -205,7 +205,7 @@ void turnpid(double targetAngle) {
     br.spin(fwd, -speed, percent);
  
     lastError = error;
-    wait(20, msec);
+    wait(7, msec);
     std::cout<<"err: " << error<<std::endl;
     std::cout<<"sensor: " << inertialSensor.rotation(degrees)<<std::endl;
   }
@@ -348,73 +348,6 @@ void setVelocity(double vel) {
   mr.setVelocity(vel, percent);
   br.setVelocity(vel, percent);
 }
-// intaking bottom and middle and outtaking inside intake
-/*void intaking() {
-  if (controller1.ButtonR1.pressing()) {
-  intake.spin(forward, 85, pct);
-  intake3.spin(reverse, 85, pct);
-
-  } else if (controller1.ButtonR2.pressing()) {
-  intake.spin(reverse, 85, pct);
-  intake3.spin(forward, 85, pct);
-
-  } else {
-  intake.stop(coast);
-  intake3.stop(coast);
-  }
-} */
- 
- //Scoring Middle Goal  
-// void scoreMiddle () {
-//   if (controller1.ButtonR1.pressing()) {
-//     intake.spin(forward, 85, pct);
-//     intake3.spin(reverse, 85, pct);
-//     intake2.spin(reverse, 85, pct);
-
-//   }
-//     else {
-//     intake.stop(brake);
-//     intake3.stop(brake);
-//     intake2.stop(brake);
-//   }
-// }
-// //Scoring Top Goal
-// void scoreHigh () {
-//   if (controller1.ButtonR2.pressing()) {
-//     intake.spin(forward, 85, pct);
-//     intake3.spin(reverse, 85, pct);
-//     intake2.spin(forward, 85, pct);
-
-//   }
-//     else {
-//     intake.stop(brake);
-//     intake3.stop(brake);
-//     intake2.stop(brake);
-//   }
-// }
-//Scoring Basket
-// void scoreBasket () {
-//   if (controller1.ButtonL1.pressing()) {
-//     intake.spin(forward, 85, pct);
-//     intake3.spin(forward, 85, pct);
-  
-//   }
-//     else {
-//     intake.stop(brake);
-//     intake3.stop(brake);
-//   }
-// }
-//Scoring Low
-// void scoreLow () {
-//   if (controller1.ButtonL2.pressing()) {
-//     intake.spin(reverse, 85, pct);
-//     intake3.spin(forward, 85, pct);
-//   }
-//     else {
-//     intake.stop(brake);
-//     intake3.stop(brake);
-//   }
-// }
 
 void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
    // score middle
@@ -467,11 +400,13 @@ void intaking2 () { //top intake
 
 void runIntake () {
   intake.spin(forward, 95, pct);
-  intake3.spin(reverse, 90, pct);
 }
 
-void runOutake () {
-  intake.spin(reverse, 90, pct);
+void runIntakeMiddle () {
+  intake3.spin(forward, 95, pct);
+}
+void runBasket () {
+  intake.spin(forward, 90, pct);
   intake3.spin(forward, 90, pct);
 }
 
@@ -488,55 +423,80 @@ void runtopintake () {
 void runtopoutake () {
   intake2.spin(reverse, 90, pct);
 }
+void runlowoutake () {
+  intake.spin(reverse, 90, pct);
+  intake3.spin(reverse, 90, pct);
+}
 
-void stopintake2 () {
+void stoptopintake () {
   intake2.stop(coast);
 }
 
 
 void simpletestauton () {
-turnpid(180);
+tkp = 0.3;
+turnpid(75);
+turnpid(347);
+turnpid(300);
+turnpid(290);
+
 }
-void blueright () { 
-kp = 0.067;
+
+void rightside () { 
+  kp = 0.052;
+  runIntakeMiddle();
   runIntake();
-  wait(0.25, sec);
-  stopIntake();
-  pid_inches(18);
-  pid_inches(5);
+  pid_inches(20);
   wait(0.1, sec);
-  runIntake();
-  wait(0.6, sec);
   stopIntake();
-  // pid_inches(10);
-  // turnpid(180);
-  // wait(0.1, sec);
-  // pid_inches(36);
-  // wait(0.2, sec);
-  // turnpid(344);
-  // pid_inches(21.5);
-  // runtopintake();
-  // runIntake();
+  // go to top goal 
+  pid_inches(-10);
+  wait(0.1, sec);
+  tkp = 0.45;
+  turnpid(76);
+  tkd = 0.3;
+  pid_inches(35);
+  tkp = 0.6;
+  tkd = 0.25;
+  turnpid(348);
+  kp = 0.052;
+  pid_inches(10);
+  runtopintake();
+  //wait(2, sec);
+  //middle goal
+  pid_inches(-10);
+  turnpid(300);
+  runIntake();
+  runIntakeMiddle();
+  pid_inches(25);
+  kp = 0.05;
+  pid_inches(5);
+  wait(0.2, sec);
+  turnpid(290);
+  pid_inches(20);
+  runlowoutake();
 }
 
-void blueleft () {
+void leftside () {
+  kp = 0.052;
 
 }
 
-void redright () {
-  
+void skillsauton () {
+  kp = 0.052;
+  runIntake();
+  runIntakeMiddle();
+  pid_inches(19);
+  wait(0.1, sec);
+  pid_inches(3);
+  wait(0.1, sec);
+  pid_inches(-0.2);
 }
-
-void redleft () {
-//  pid_inches(40);
-//   turnpid(90);
- }
-
 
 int auton = 1;
 //auton selector
 void autonselector() {
-  int numofautons = 5;
+  int numofautons = 4;
   if (controller1.ButtonRight.pressing()) {
     auton++;
     wait(200,msec);
@@ -557,19 +517,15 @@ void autonselector() {
   } else if (auton == 2) {
     controller1.Screen.clearScreen();
     controller1.Screen.setCursor(2,9);
-    controller1.Screen.print("Blue Right");
+    controller1.Screen.print("Right Side");
   } else if (auton == 3) {
     controller1.Screen.clearScreen();
     controller1.Screen.setCursor(2,8);
-    controller1.Screen.print("Blue Left");
+    controller1.Screen.print("Left Side");
   } else if (auton == 4) {
     controller1.Screen.clearScreen();
     controller1.Screen.setCursor(2,8);
-    controller1.Screen.print("Red Right");
-  } else if (auton == 5) {
-    controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,8);
-    controller1.Screen.print("Red Left");
+    controller1.Screen.print("Skills");
   }
 }
  
@@ -578,13 +534,11 @@ void autonomous(void) {
   if (auton == 1) {
     simpletestauton();
   } else if (auton == 2){
-    blueright();
+    rightside();
   } else if (auton == 3){
-    blueleft();
+    leftside();
   } else if (auton == 4){
-    redright();
-  } else if (auton == 5){
-    redleft();
+    skillsauton();
   } 
 }
 

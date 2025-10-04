@@ -8,23 +8,19 @@ using code = vision::code;
 // A global instance of brain used for printing to the V5 Brain screen
 brain  Brain;
 
+//drivetrain motors
 controller controller1 = controller(primary);
-motor fl = motor(PORT20, ratio6_1, true); 
-motor ml = motor(PORT19, ratio6_1, true); 
-motor bl = motor(PORT18, ratio6_1, true); 
-motor fr = motor(PORT12, ratio6_1, false); 
-motor mr = motor(PORT13, ratio6_1, false); 
-motor br = motor(PORT14, ratio6_1, false); 
-// motor fl(PORT20, ratio6_1, true);
-// motor ml(PORT19, ratio6_1, true);
-// motor bl(PORT18, ratio6_1, true);
-// motor fr(PORT12, ratio6_1, false);
-// motor mr(PORT13, ratio6_1, false);
-// motor br(PORT14, ratio6_1, false);
-motor intake = motor(PORT5, ratio6_1, true); // BOTTOM AND MIDDLE INTAKE
-motor intake2 = motor(PORT2, ratio18_1, true); // TOP INTAKE
-motor intake3 = motor(PORT3, ratio18_1, false); // INSIDE INTAKE
-inertial inertialSensor = inertial(PORT1); 
+motor fl = motor(PORT9, ratio6_1, true); 
+motor ml = motor(PORT8, ratio6_1, true); 
+motor bl = motor(PORT7, ratio6_1, true); 
+motor fr = motor(PORT3, ratio6_1, false); 
+motor mr = motor(PORT2, ratio6_1, false); 
+motor br = motor(PORT1, ratio6_1, false); 
+// intake motors
+motor intake = motor(PORT12, ratio6_1, true); // BOTTOM AND MIDDLE INTAKE
+motor intake2 = motor(PORT10, ratio18_1, true); // TOP INTAKE
+motor intake3 = motor(PORT20, ratio18_1, false); // INSIDE INTAKE
+inertial inertialSensor = inertial(PORT11); 
 
 // VEXcode generated functions
 
