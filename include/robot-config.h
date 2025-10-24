@@ -13,6 +13,7 @@ extern motor br;
 extern motor intake;
 extern motor intake2;
 extern motor intake3;
+extern pneumatics descore;
 extern inertial inertialSensor;
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.

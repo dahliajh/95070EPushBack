@@ -19,7 +19,8 @@ motor br = motor(PORT1, ratio6_1, false);
 // intake motors
 motor intake = motor(PORT12, ratio6_1, true); // BOTTOM AND MIDDLE INTAKE
 motor intake2 = motor(PORT10, ratio18_1, true); // TOP INTAKE
-motor intake3 = motor(PORT20, ratio18_1, false); // INSIDE INTAKE
+motor intake3 = motor(PORT20, ratio18_1, true); // INSIDE INTAKE
+pneumatics descore = pneumatics(Brain.ThreeWirePort.C);
 inertial inertialSensor = inertial(PORT11); 
 
 // VEXcode generated functions

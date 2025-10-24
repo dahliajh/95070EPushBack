@@ -25,8 +25,6 @@ using namespace vex;
 // A global instance of competition
 competition Competition;
 
-bool descore_up = false;
-bool prevdescore_up = false;
 // define your global instances of motors and other devices here
 
 /*---------------------------------------------------------------------------*/
@@ -66,7 +64,6 @@ void pid(double targetDistance) {
  fr.setPosition(0, degrees);
  mr.setPosition(0, degrees);
  br.setPosition(0, degrees);
- int stepCount = 0;
  while (true) {
    double measureDistance = (fl.position(degrees) + fr.position(degrees))/2;
    error = targetDistance - measureDistance;
@@ -79,14 +76,9 @@ void pid(double targetDistance) {
      fr.stop(coast);
      mr.stop(coast);
      br.stop(coast);
-     std::cout << " pid # of steps: " << stepCount << std::endl;
      return;
    }
    double speed = error * kp + integral * ki + (error - lastError) * kd;
-   //controller1.Screen.print("initial speed: %.2f ", speed);
-   // std::cout<<"speed: " << speed<< " p: " << error * kp << " d: " << (error - lastError) * kd << std::endl;
-  
-   stepCount = stepCount + 1;
    fl.spin(forward, speed, percent);
    ml.spin(forward, speed, percent);
    bl.spin(forward, speed, percent);
@@ -98,7 +90,6 @@ void pid(double targetDistance) {
    lastError = error;
    wait(15, msec);
  }
- std::cout << " pid # of steps: " << stepCount << std::endl;
 }
 
 // PID to inches
@@ -107,9 +98,9 @@ void pid_inches (double DistanceInInches) {
  pid(degrees);
 }
 
-double tkp = 0.5; //tune this first
+double tkp = 0.6; //tune this first
 double tki = 0; //and lastly this
-double tkd = 0.3; //then this
+double tkd = 0.25; //then this
 
 // //turn pid
 // void turnpid_orig (double targetAngle) {
@@ -161,23 +152,21 @@ void turnpid(double targetAngle) {
   vex::timer turnTimer;
   turnTimer.clear();
   double timeout = 3000; // 3-second timeout
-  int stepCount = 0;
+
   while (true) {
     double measureAngle = inertialSensor.rotation(degrees);
     error = targetAngle - measureAngle;
 
     // Correctly handle the 180-degree wrap-around for the shortest path
     error = fmod(error + 180, 360) - 180;
-    
-    // std::cout << "error: " << error <<std::endl;
-    if (fabs(error) < 2.0) { // Reduced tolerance for better accuracy
+
+    if (fabs(error) < 1.0) { // Reduced tolerance for better accuracy
       fl.stop(brake);
       ml.stop(brake);
       bl.stop(brake);
       fr.stop(brake);
       mr.stop(brake);
       br.stop(brake);
-      std::cout << " turnpid # of steps: " << stepCount << std::endl;
       return; 
     }
     
@@ -188,7 +177,6 @@ void turnpid(double targetAngle) {
       fr.stop(coast);
       mr.stop(coast);
       br.stop(coast);
-      std::cout << " turnpid # of steps: " << stepCount << std::endl;
       return;
     }
     
@@ -201,11 +189,6 @@ void turnpid(double targetAngle) {
 
     double derivative = error - lastError;
     double speed = (error * tkp) + (integral * tki) + (derivative * tkd);
-    // controller1.Screen.print("turn speed: %.2f ", speed);
-
-    //std::cout<<"turn sp: " << speed <<std::endl;
-    // std::cout<<"turnspeed: " << speed<< " p: " << error * tkp << " d: " << (error - lastError) * tkd << std::endl;
-    stepCount = stepCount + 1;
 
     // Clamp the speed to prevent it from going over 100%
     if (fabs(speed) > 100) {
@@ -222,12 +205,10 @@ void turnpid(double targetAngle) {
     br.spin(fwd, -speed, percent);
  
     lastError = error;
-    wait(5, msec);
-    //std::cout<<"err: " << error<<std::endl;
-    //std::cout<<"sensor: " << inertialSensor.rotation(degrees)<<std::endl;
+    wait(7, msec);
+    std::cout<<"err: " << error<<std::endl;
+    std::cout<<"sensor: " << inertialSensor.rotation(degrees)<<std::endl;
   }
-  std::cout << " turnpid # of steps: " << stepCount << std::endl;
-
 }
 
 void moveAllWheels(int SpeedLeft, int SpeedRight) {
@@ -332,7 +313,6 @@ void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
  //score bottom/outtake
     else if (controller1.ButtonL2.pressing()) {
     intake.spin(reverse, 85, pct);
-    intake2.spin(reverse, 85, pct);
     intake3.spin(reverse, 85, pct);
   }
     else {
@@ -342,26 +322,18 @@ void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
   }
 }
 
-void descore_up_fn () {
-  descore.set(false);
-  std::cout << " desore_up " << std::endl;
-}
-void descore_down_fn () {
-  descore.set(true);
-  std::cout << " descore_down " << std::endl;
-}
 //intaking top intake
-// void intaking2 () { //top intake
-//   if (controller1.ButtonL1.pressing()) {
-//     intake2.spin(forward, 85, pct);
+void intaking2 () { //top intake
+  if (controller1.ButtonL1.pressing()) {
+    intake2.spin(forward, 85, pct);
 
-//   } else if (controller1.ButtonL2.pressing()) {
-//     intake2.spin(reverse, 85, pct);
+  } else if (controller1.ButtonL2.pressing()) {
+    intake2.spin(reverse, 85, pct);
 
-//   } else {
-//     intake2.stop(coast);
-//   }
-// }
+  } else {
+    intake2.stop(coast);
+  }
+}
 
 void runIntake () {
   intake.spin(forward, 95, pct);
@@ -392,11 +364,6 @@ void runlowoutake () {
   intake.spin(reverse, 90, pct);
   intake3.spin(reverse, 90, pct);
 }
-void runmiddletop () {
-  intake.spin(forward, 90, pct);
-  intake2.spin(reverse, 90, pct);
-  intake3.spin(reverse, 90, pct);
-}
 
 void stoptopintake () {
   intake2.stop(coast);
@@ -404,141 +371,63 @@ void stoptopintake () {
 
 
 void simpletestauton () {
-  kp = 0.0572;
-  pid_inches(20);
-  tkp = 0.6;
-  turnpid(76);
-  pid_inches(35);
-  turnpid(344);
+tkp = 0.3;
+turnpid(75);
+turnpid(347);
+turnpid(300);
+turnpid(290);
+
 }
 
 void rightside () { 
-  std::cout<<"RIGHT SIDE" <<std::endl;
-  kp = 0.057;
-  tkp = 0.5;
+  kp = 0.052;
   runIntakeMiddle();
   runIntake();
   pid_inches(20);
+  wait(0.1, sec);
   stopIntake();
-  //go to top goal 
-  kp = 0.052;
+  // go to top goal 
   pid_inches(-10);
-  //turn straight ahead
-  tkp = 0.5;
-  turnpid(78);
+  wait(0.1, sec);
+  // tkp = 0.45;
+  // tkd = 0.3;
+  turnpid(76);
+  pid_inches(35);
+  // tkp = 0.6;
+  // tkd = 0.25;
+  turnpid(344);
   kp = 0.052;
-  pid_inches(33);
-  //turn into long goal and score
-  //tkd = 0.4;
-  //tkp = 0.75;
-  tkd = 0.5;
-  turnpid(348);
-  kp = 0.052;
+  pid_inches(8);
   runtopintake();
-  pid_inches(12);
-  wait(1.1, sec);
+  //wait(2, sec);
   //middle goal
-  kp = 0.052;
-  pid_inches(-12);
-  //tkp = 1.5;
-  //turn in direction of middle goal
-  turnpid(302);
+  pid_inches(-10);
+  turnpid(300);
   runIntake();
   runIntakeMiddle();
-  kp = 0.06;
   pid_inches(25);
-  //score in middle goal
-  kp = 0.067;
-  pid_inches(22);
+  kp = 0.05;
+  pid_inches(5);
+  wait(0.2, sec);
+  turnpid(290);
+  pid_inches(20);
   runlowoutake();
 }
 
 void leftside () {
   kp = 0.052;
-  tkp = 0.5;
-  runIntakeMiddle();
-  runIntake();
-  pid_inches(22);
-  stopIntake();
-  pid_inches(-10);
-  turnpid(287);
-  pid_inches(32);
-  tkd = 0.4;
-  turnpid(13);
-  runtopintake();
-  pid_inches(7);
-  wait(1, sec);
+
 }
 
 void skillsauton () {
   kp = 0.052;
   runIntake();
   runIntakeMiddle();
-  //Get the first ball
-  kp = 0.044;
-  pid_inches(20);
-  wait(0.1, sec);
-  //Get the second ball
-  pid_inches(-5);
-  turnpid(12);
-  pid_inches(8);
-  wait(0.1, sec);
-  //Get the last two balls
-  turnpid(-17);
-  pid_inches(3);
-  wait(0.15, sec);
-  pid_inches(5);
-  //Go to lowmid goal
-  stopIntake();
-  turnpid(-70);
-  pid_inches(14);
-  runlowoutake();
-  wait(5, sec);
-  stopIntake();
-  /*//Park
-  pid_inches(-6);
-  turnpid(200);
-  pid_inches(27);
-  turnpid(155);
-  wait(0.2, sec);
-  //turnpid(350);
-  pid_inches(50);
-  runIntakeMiddle();
-  wait(4, sec);
-  pid_inches(3);
-  wait(4, sec);
-  */
-  //Go get first left ball for high middle goal
-  pid_inches(-4.5);
-  turnpid(192);
-  pid_inches(10);
-  turnpid(238);
-  runIntake();
-  runIntakeMiddle();
-  pid_inches(30);
-  wait(0.2, sec);
-  //Get second ball
-  pid_inches(12);
-  //turnpid(12);
-  //pid_inches(8);
-  //wait(0.1, sec);
-  //Score
-  turnpid(10);
   pid_inches(19);
-  //wait(0.15, sec);
-  stopIntake();
-  //turnpid(180);
-  //pid_inches(20);
-  runIntake();
-  runmiddletop();
-  wait(3, sec);
-  pid_inches(-15);
-  stopIntake();
-  turnpid(70);
-  pid_inches(29);
-  turnpid(150);
-  //turnpid(82);
-  pid_inches(50);
+  wait(0.1, sec);
+  pid_inches(3);
+  wait(0.1, sec);
+  pid_inches(-0.2);
 }
 
 int auton = 1;
@@ -572,7 +461,7 @@ void autonselector() {
     controller1.Screen.print("Left Side");
   } else if (auton == 4) {
     controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,12);
+    controller1.Screen.setCursor(2,8);
     controller1.Screen.print("Skills");
   }
 }
@@ -632,19 +521,8 @@ void usercontrol(void) {
   while (1) {
     arcade();
     intaking();
-   if (controller1.ButtonY.pressing()) {
-    if (prevdescore_up == false) {
-      descore_up = !descore_up;
-      prevdescore_up = true;
-    } else {
-      if (prevdescore_up == true) {
-        prevdescore_up = false;
-      }
-    } descore.set(descore_up);
-    // controller1.ButtonY.released(descore_down_fn);
     wait(20, msec); 
   }
- }
 }
 
 bool selecting = 1;
