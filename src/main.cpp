@@ -27,6 +27,7 @@ competition Competition;
 
 bool descore_up = false;
 bool prevdescore_up = false;
+bool tpidflag = false;
 // define your global instances of motors and other devices here
 
 /*---------------------------------------------------------------------------*/
@@ -204,7 +205,9 @@ void turnpid(double targetAngle) {
     // controller1.Screen.print("turn speed: %.2f ", speed);
 
     //std::cout<<"turn sp: " << speed <<std::endl;
-    // std::cout<<"turnspeed: " << speed<< " p: " << error * tkp << " d: " << (error - lastError) * tkd << std::endl;
+    if (tpidflag) {
+      std::cout<<"turnspeed: " << speed<< " error: " << error << " p: " << error * tkp << " d: " << (error - lastError) * tkd << std::endl;
+    }
     stepCount = stepCount + 1;
 
     // Clamp the speed to prevent it from going over 100%
@@ -222,7 +225,7 @@ void turnpid(double targetAngle) {
     br.spin(fwd, -speed, percent);
  
     lastError = error;
-    wait(5, msec);
+    wait(15, msec);
     //std::cout<<"err: " << error<<std::endl;
     //std::cout<<"sensor: " << inertialSensor.rotation(degrees)<<std::endl;
   }
@@ -385,9 +388,7 @@ void runtopintake () {
   intake3.spin(reverse, 90, pct);
   intake2.spin(forward, 95, pct);
 }
-void runtopoutake () {
-  intake2.spin(reverse, 90, pct);
-}
+
 void runlowoutake () {
   intake.spin(reverse, 90, pct);
   intake3.spin(reverse, 90, pct);
@@ -453,6 +454,62 @@ void rightside () {
   runlowoutake();
 }
 
+void rightside4block () {
+  kp = 0.057;
+  tkp = 0.3;
+  runIntakeMiddle();
+  runIntake();
+  //1st block
+  pid_inches(18);
+  wait(0.07, sec);
+  pid_inches(-2);
+  //2nd block
+  turnpid(7);
+  pid_inches(3);
+  wait(0.07, sec);
+  //3rd block
+  turnpid(-3);
+  pid_inches(5);
+  wait(0.07, sec);
+  //go to long goal
+  pid_inches(-15);
+  turnpid(75);
+  pid_inches(32);
+  tpidflag = true;
+  tkd = 0.1;
+  turnpid(345);
+  tpidflag = false;
+  //kp = 0.057;
+  runtopintake();
+  pid_inches(9.5);
+}
+
+void rightside4blockshort () {
+  kp = 0.057;
+  tkp = 0.4;
+  runIntakeMiddle();
+  runIntake();
+  //1st block
+  pid_inches(18);
+  wait(0.07, sec);
+  pid_inches(-2);
+  //2nd block
+  turnpid(7);
+  pid_inches(3);
+  wait(0.07, sec);
+  //3rd block
+  turnpid(-3);
+  pid_inches(5);
+  wait(0.07, sec);
+  tkp = 0.35;
+  turnpid(105);
+  pid_inches(33);
+  turnpid(345);
+  runtopintake();
+  pid_inches(13);
+
+}
+
 void leftside () {
   kp = 0.052;
   tkp = 0.5;
@@ -491,7 +548,7 @@ void skillsauton () {
   //Go to lowmid goal
   stopIntake();
   turnpid(-70);
-  pid_inches(14);
+  pid_inches(13);
   runlowoutake();
   wait(5, sec);
   stopIntake();
@@ -511,31 +568,31 @@ void skillsauton () {
   //Go get first left ball for high middle goal
   pid_inches(-4.5);
   turnpid(192);
-  pid_inches(10);
+  pid_inches(12);
   turnpid(238);
   runIntake();
   runIntakeMiddle();
   pid_inches(30);
   wait(0.2, sec);
   //Get second ball
-  pid_inches(12);
+  pid_inches(5);
   //turnpid(12);
   //pid_inches(8);
   //wait(0.1, sec);
   //Score
   turnpid(10);
-  pid_inches(19);
-  //wait(0.15, sec);
   stopIntake();
+  pid_inches(16);
+  //wait(0.15, sec);
   //turnpid(180);
   //pid_inches(20);
   runIntake();
   runmiddletop();
-  wait(3, sec);
+  wait(5, sec);
   pid_inches(-15);
   stopIntake();
   turnpid(70);
-  pid_inches(29);
+  pid_inches(30);
   turnpid(150);
   //turnpid(82);
   pid_inches(50);
@@ -544,7 +601,7 @@ void skillsauton () {
 int auton = 1;
 //auton selector
 void autonselector() {
-  int numofautons = 4;
+  int numofautons = 6;
   if (controller1.ButtonRight.pressing()) {
     auton++;
     wait(200,msec);
@@ -568,9 +625,17 @@ void autonselector() {
     controller1.Screen.print("Right Side");
   } else if (auton == 3) {
     controller1.Screen.clearScreen();
+    controller1.Screen.setCursor(2,4);
+    controller1.Screen.print(" Right Side 4 Block");
+  } else if (auton == 4) {
+    controller1.Screen.clearScreen();
+    controller1.Screen.setCursor(2,6);
+    controller1.Screen.print("Right Side 4BS");
+  } else if (auton == 5) {
+    controller1.Screen.clearScreen();
     controller1.Screen.setCursor(2,8);
     controller1.Screen.print("Left Side");
-  } else if (auton == 4) {
+  } else if (auton == 6) {
     controller1.Screen.clearScreen();
     controller1.Screen.setCursor(2,12);
     controller1.Screen.print("Skills");
@@ -584,8 +649,12 @@ void autonomous(void) {
   } else if (auton == 2){
     rightside();
   } else if (auton == 3){
-    leftside();
+    rightside4block();
   } else if (auton == 4){
+    rightside4blockshort();
+  } else if (auton == 5){
+    leftside();
+  } else if (auton == 6){
     skillsauton();
   } 
 }
