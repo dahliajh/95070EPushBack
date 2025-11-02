@@ -28,6 +28,7 @@ competition Competition;
 bool descore_up = false;
 bool prevdescore_up = false;
 bool tpidflag = false;
+
 // define your global instances of motors and other devices here
 
 /*---------------------------------------------------------------------------*/
