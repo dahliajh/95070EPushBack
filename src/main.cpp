@@ -27,6 +27,8 @@ competition Competition;
 
 bool descore_up = false;
 bool prevdescore_up = false;
+bool matchload_down = false;
+bool prevmatchload_down = false;
 bool tpidflag = false;
 
 // define your global instances of motors and other devices here
@@ -86,16 +88,16 @@ void pid(double targetDistance) {
    }
    double speed = error * kp + integral * ki + (error - lastError) * kd;
    //controller1.Screen.print("initial speed: %.2f ", speed);
-   // std::cout<<"speed: " << speed<< " p: " << error * kp << " d: " << (error - lastError) * kd << std::endl;
+   std::cout<<"speed: " << speed<< " error: " << error << " p: " << error * kp << " d: " << (error - lastError) * kd << std::endl;
   
    stepCount = stepCount + 1;
-   fl.spin(forward, speed, percent);
-   ml.spin(forward, speed, percent);
-   bl.spin(forward, speed, percent);
+  fl.spin(forward, speed, percent);
+  ml.spin(forward, speed, percent);
+  bl.spin(forward, speed, percent);
 
-   fr.spin(forward, speed, percent);
-   mr.spin(forward, speed, percent);
-   br.spin(forward, speed, percent);
+  fr.spin(forward, speed, percent);
+  mr.spin(forward, speed, percent);
+  br.spin(forward, speed, percent);
 
    lastError = error;
    wait(15, msec);
@@ -296,7 +298,7 @@ void turnRight(double angle) {
   }
   stopWheels();
 }
-  
+
 //set velocity
 void setVelocity(double vel) {
   // set all motors to velocity value of 'vel'
@@ -310,39 +312,37 @@ void setVelocity(double vel) {
 }
 
 void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
-   // score middle
-  if (controller1.ButtonR1.pressing()) { 
+   // hold blocks
+  if (controller1.ButtonL1.pressing()) { 
     intake.spin(forward, 85, pct);
-    intake3.spin(reverse, 85, pct);
-    intake2.spin(reverse, 85, pct);
-
+    //intake3.spin(reverse, 85, pct);
   }
 
 // score high
     else if (controller1.ButtonR2.pressing()) {  
     intake.spin(forward, 85, pct);
-    intake3.spin(reverse, 85, pct);
+    //intake3.spin(reverse, 85, pct);
     intake2.spin(forward, 85, pct);
 
   }
   
-// score in basket
-  else if (controller1.ButtonL1.pressing()) { 
-    intake.spin(forward, 85, pct);
-    intake3.spin(forward, 85, pct);
+// score in basket (not needed anymore cuz new bot)
+  // else if (controller1.ButtonL1.pressing()) { 
+  //   intake.spin(forward, 85, pct);
+  //   //intake3.spin(forward, 85, pct);
   
-  }
+  // }
 
  //score bottom/outtake
     else if (controller1.ButtonL2.pressing()) {
     intake.spin(reverse, 85, pct);
     intake2.spin(reverse, 85, pct);
-    intake3.spin(reverse, 85, pct);
+    //intake3.spin(reverse, 85, pct);
   }
     else {
     intake.stop(brake);
     intake2.stop(brake);
-    intake3.stop(brake);
+    //intake3.stop(brake);
   }
 }
 
@@ -354,50 +354,46 @@ void descore_down_fn () {
   descore.set(true);
   std::cout << " descore_down " << std::endl;
 }
-//intaking top intake
-// void intaking2 () { //top intake
-//   if (controller1.ButtonL1.pressing()) {
-//     intake2.spin(forward, 85, pct);
 
-//   } else if (controller1.ButtonL2.pressing()) {
-//     intake2.spin(reverse, 85, pct);
+void matchload_down_fn () {
+  matchloader.set(false);
+}
 
-//   } else {
-//     intake2.stop(coast);
-//   }
-// }
+void matchload_up_fn () {
+  matchloader.set(true);
+}
 
 void runIntake () {
   intake.spin(forward, 95, pct);
 }
 
 void runIntakeMiddle () {
-  intake3.spin(forward, 95, pct);
+//intake3.spin(forward, 95, pct);
 }
+
 void runBasket () {
   intake.spin(forward, 90, pct);
-  intake3.spin(forward, 90, pct);
+  //intake3.spin(forward, 90, pct);
 }
 
 void stopIntake () {
   intake.stop(coast);
-  intake3.stop(coast);
+  //intake3.stop(coast);
 }
 
 void runtopintake () {
   intake.spin(forward, 95, pct);
-  intake3.spin(reverse, 90, pct);
   intake2.spin(forward, 95, pct);
 }
 
 void runlowoutake () {
   intake.spin(reverse, 90, pct);
-  intake3.spin(reverse, 90, pct);
+  //intake3.spin(reverse, 90, pct);
 }
 void runmiddletop () {
   intake.spin(forward, 90, pct);
   intake2.spin(reverse, 90, pct);
-  intake3.spin(reverse, 90, pct);
+  //intake3.spin(reverse, 90, pct);
 }
 
 void stoptopintake () {
@@ -406,19 +402,16 @@ void stoptopintake () {
 
 
 void simpletestauton () {
-  kp = 0.0572;
   pid_inches(20);
-  tkp = 0.6;
-  turnpid(76);
-  pid_inches(35);
-  turnpid(344);
+  wait(0.2, sec);
+  pid_inches(-20);
 }
 
 void rightside () { 
   std::cout<<"RIGHT SIDE" <<std::endl;
   kp = 0.057;
   tkp = 0.5;
-  runIntakeMiddle();
+  //runIntakeMiddle();
   runIntake();
   pid_inches(20);
   stopIntake();
@@ -455,34 +448,29 @@ void rightside () {
   runlowoutake();
 }
 
-void rightside4block () {
+void rightside4blocknew () {
   kp = 0.057;
   tkp = 0.3;
-  runIntakeMiddle();
   runIntake();
-  //1st block
-  pid_inches(18);
-  wait(0.07, sec);
-  pid_inches(-2);
-  //2nd block
-  turnpid(7);
+  //1st and 2nd block
+  pid_inches(20);
+  //wait(0.07, sec);
+  //3rd block
+  kp = 0.05;
   pid_inches(3);
   wait(0.07, sec);
-  //3rd block
-  turnpid(-3);
-  pid_inches(5);
-  wait(0.07, sec);
+  pid_inches(2);
+  wait(0.05, sec);
   //go to long goal
-  pid_inches(-15);
-  turnpid(75);
-  pid_inches(32);
-  tpidflag = true;
-  tkd = 0.1;
-  turnpid(345);
-  tpidflag = false;
+  turnpid(105);
+  pid_inches(31.5);
+  //tpidflag = true;
+  turnpid(161);
+  //tpidflag = false;
   //kp = 0.057;
+  pid_inches(-16);
   runtopintake();
-  pid_inches(9.5);
+
 }
 
 void rightside4blockshort () {
@@ -502,6 +490,7 @@ void rightside4blockshort () {
   turnpid(-3);
   pid_inches(5);
   wait(0.07, sec);
+  //go to long goal
   tkp = 0.35;
   turnpid(105);
   pid_inches(33);
@@ -650,7 +639,7 @@ void autonomous(void) {
   } else if (auton == 2){
     rightside();
   } else if (auton == 3){
-    rightside4block();
+    rightside4blocknew();
   } else if (auton == 4){
     rightside4blockshort();
   } else if (auton == 5){
@@ -702,6 +691,7 @@ void usercontrol(void) {
   while (1) {
     arcade();
     intaking();
+  // descore
    if (controller1.ButtonY.pressing()) {
     if (prevdescore_up == false) {
       descore_up = !descore_up;
@@ -714,8 +704,24 @@ void usercontrol(void) {
     // controller1.ButtonY.released(descore_down_fn);
     wait(20, msec); 
   }
+ 
+
+ //matchloader
+ if (controller1.ButtonX.pressing()) {
+    std::cout << " previous value " << prevmatchload_down << std::endl;
+    if (prevmatchload_down == false) {
+      matchload_down = !matchload_down;
+      prevmatchload_down = true;
+    } else {
+      if (prevmatchload_down == true) {
+        prevmatchload_down = false;
+      }
+    } matchloader.set(matchload_down);
+    wait(20, msec); 
+  }
+  std::cout << " matchloader " << matchload_down << std::endl;
  }
-}
+ }
 
 bool selecting = 1;
 void pre_auton(void) {
