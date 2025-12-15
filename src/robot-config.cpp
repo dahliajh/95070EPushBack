@@ -11,7 +11,7 @@ brain  Brain;
 //drivetrain motors
 controller controller1 = controller(primary);
 motor fl = motor(PORT9, ratio6_1, true);  
-motor ml = motor(PORT8, ratio6_1, true); //backwards
+motor ml = motor(PORT8, ratio6_1, true); 
 motor bl = motor(PORT7, ratio6_1, true); 
 motor fr = motor(PORT3, ratio6_1, false); // working
 motor mr = motor(PORT2, ratio6_1, false); // working
@@ -20,9 +20,10 @@ motor br = motor(PORT1, ratio6_1, false); // working
 motor intake = motor(PORT4, ratio6_1, false); // BOTTOM INTAKE
 motor intake2 = motor(PORT10, ratio6_1, true); // TOP INTAKE
 //motor intake3 = motor(PORT20, ratio18_1, true); // INSIDE INTAKE
-pneumatics descore = pneumatics(Brain.ThreeWirePort.C);
-pneumatics matchloader = pneumatics(Brain.ThreeWirePort.A);
+pneumatics descore = pneumatics(Brain.ThreeWirePort.D);
+pneumatics matchloader = pneumatics(Brain.ThreeWirePort.C);
 inertial inertialSensor = inertial(PORT5); 
+motor KL = motor(PORT21, ratio36_1, false);
 
 // VEXcode generated functions
 

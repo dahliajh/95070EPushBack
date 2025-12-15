@@ -58,17 +58,20 @@ bool tpidflag = false;
 double kp = 0.15; // tune this first
 double ki = 0.15; // and lastly this
 double kd = 0.13; // then this 
+double pidTimeout = 5000; // 5-second timeout
 
 void pid(double targetDistance) {
  double error = targetDistance;
  double integral = 0;
  double lastError =  targetDistance;
+ vex::timer pidTimer;
+ pidTimer.clear();
  double prevDistanceError = fl.position(degrees);
  fl.setPosition(0, degrees);
- ml.setPosition(0, degrees);
- bl.setPosition(0, degrees);
  fr.setPosition(0, degrees);
+ ml.setPosition(0, degrees);
  mr.setPosition(0, degrees);
+ bl.setPosition(0, degrees);
  br.setPosition(0, degrees);
  int stepCount = 0;
  while (true) {
@@ -83,26 +86,39 @@ void pid(double targetDistance) {
      fr.stop(coast);
      mr.stop(coast);
      br.stop(coast);
-     std::cout << " pid # of steps: " << stepCount << std::endl;
+     //std::cout << " pid # of steps: " << stepCount << std::endl;
      return;
    }
+
+   if (pidTimer.time(msec) > pidTimeout) {
+      fl.stop(coast);
+      fr.stop(coast);
+      ml.stop(coast);
+      mr.stop(coast);
+      bl.stop(coast);
+      br.stop(coast);
+      std::cout << " timingout of pid after msec" << pidTimeout << std::endl;
+      return;
+    }
+
    double speed = error * kp + integral * ki + (error - lastError) * kd;
    //controller1.Screen.print("initial speed: %.2f ", speed);
-   std::cout<<"speed: " << speed<< " error: " << error << " p: " << error * kp << " d: " << (error - lastError) * kd << std::endl;
+   //std::cout<<"speed: " << speed<< " error: " << error << " p: " << error * kp << " d: " << (error - lastError) * kd << std::endl;
   
    stepCount = stepCount + 1;
   fl.spin(forward, speed, percent);
-  ml.spin(forward, speed, percent);
-  bl.spin(forward, speed, percent);
-
   fr.spin(forward, speed, percent);
+
+  ml.spin(forward, speed, percent);
   mr.spin(forward, speed, percent);
+
+  bl.spin(forward, speed, percent);
   br.spin(forward, speed, percent);
 
    lastError = error;
    wait(15, msec);
  }
- std::cout << " pid # of steps: " << stepCount << std::endl;
+ //std::cout << " pid # of steps: " << stepCount << std::endl;
 }
 
 // PID to inches
@@ -174,10 +190,11 @@ void turnpid(double targetAngle) {
     error = fmod(error + 180, 360) - 180;
     
     // std::cout << "error: " << error <<std::endl;
-    if (fabs(error) < 2.0) { // Reduced tolerance for better accuracy
+    if (fabs(error) < 4.0) { // Reduced tolerance for better accuracy
       fl.stop(brake);
       ml.stop(brake);
       bl.stop(brake);
+
       fr.stop(brake);
       mr.stop(brake);
       br.stop(brake);
@@ -189,6 +206,7 @@ void turnpid(double targetAngle) {
       fl.stop(coast);
       ml.stop(coast);
       bl.stop(coast);
+
       fr.stop(coast);
       mr.stop(coast);
       br.stop(coast);
@@ -199,7 +217,7 @@ void turnpid(double targetAngle) {
     //Accumulate error over time
     integral += error;
 
-    if (fabs(error) > 10) { // Changed this to a smaller value for anti-windup
+    if (fabs(error) > 5) { // Changed this to a smaller value for anti-windup
       integral = 0; // Reset integral if the error is large
     }
 
@@ -209,7 +227,7 @@ void turnpid(double targetAngle) {
 
     //std::cout<<"turn sp: " << speed <<std::endl;
     if (tpidflag) {
-      std::cout<<"turnspeed: " << speed<< " error: " << error << " p: " << error * tkp << " d: " << (error - lastError) * tkd << std::endl;
+      std::cout<<"turnspeed: " << speed << " error: " << error << " p: " << error * tkp << " d: " << (error - lastError) * tkd << std::endl;
     }
     stepCount = stepCount + 1;
 
@@ -222,7 +240,7 @@ void turnpid(double targetAngle) {
     fl.spin(fwd, speed, percent);
     ml.spin(fwd, speed, percent);
     bl.spin(fwd, speed, percent);
- 
+
     fr.spin(fwd, -speed, percent); // Note the negative sign here
     mr.spin(fwd, -speed, percent);
     br.spin(fwd, -speed, percent);
@@ -314,15 +332,13 @@ void setVelocity(double vel) {
 void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
    // hold blocks
   if (controller1.ButtonL1.pressing()) { 
-    intake.spin(forward, 85, pct);
-    //intake3.spin(reverse, 85, pct);
+    intake.spin(forward, 90, pct);
   }
 
 // score high
     else if (controller1.ButtonR2.pressing()) {  
-    intake.spin(forward, 85, pct);
-    //intake3.spin(reverse, 85, pct);
-    intake2.spin(forward, 85, pct);
+    intake.spin(forward, 90, pct);
+    intake2.spin(forward, 90, pct);
 
   }
   
@@ -335,8 +351,8 @@ void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
 
  //score bottom/outtake
     else if (controller1.ButtonL2.pressing()) {
-    intake.spin(reverse, 85, pct);
-    intake2.spin(reverse, 85, pct);
+    intake.spin(reverse, 90, pct);
+    intake2.spin(reverse, 90, pct);
     //intake3.spin(reverse, 85, pct);
   }
     else {
@@ -348,7 +364,7 @@ void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
 
 void descore_up_fn () {
   descore.set(false);
-  std::cout << " desore_up " << std::endl;
+  std::cout << " descore_up " << std::endl;
 }
 void descore_down_fn () {
   descore.set(true);
@@ -356,19 +372,15 @@ void descore_down_fn () {
 }
 
 void matchload_down_fn () {
-  matchloader.set(false);
+  matchloader.set(true);
 }
 
 void matchload_up_fn () {
-  matchloader.set(true);
+  matchloader.set(false);
 }
 
 void runIntake () {
   intake.spin(forward, 95, pct);
-}
-
-void runIntakeMiddle () {
-//intake3.spin(forward, 95, pct);
 }
 
 void runBasket () {
@@ -386,9 +398,9 @@ void runtopintake () {
   intake2.spin(forward, 95, pct);
 }
 
-void runlowoutake () {
+void runoutake () {
   intake.spin(reverse, 90, pct);
-  //intake3.spin(reverse, 90, pct);
+  intake2.spin(reverse, 90, pct);
 }
 void runmiddletop () {
   intake.spin(forward, 90, pct);
@@ -400,22 +412,37 @@ void stoptopintake () {
   intake2.stop(coast);
 }
 
+void downmatchload () {
+  matchloader.set(true);
+}
 
+void upmatchload () {
+  matchloader.set(false);
+}
+
+void descoreup () {
+  descore.set(true);
+}
+
+void descoredown () {
+  descore.set(false);
+}
 void simpletestauton () {
+  kp = 0.057;
+  // kd = 0.3;
   pid_inches(20);
-  wait(0.2, sec);
-  pid_inches(-20);
+  //turnpid(90);
+  //pid_inches(20);
 }
 
 void rightside () { 
   std::cout<<"RIGHT SIDE" <<std::endl;
   kp = 0.057;
   tkp = 0.5;
-  //runIntakeMiddle();
   runIntake();
   pid_inches(20);
   stopIntake();
-  //go to top goal 
+  //go to top goal
   kp = 0.052;
   pid_inches(-10);
   //turn straight ahead
@@ -439,16 +466,16 @@ void rightside () {
   //turn in direction of middle goal
   turnpid(302);
   runIntake();
-  runIntakeMiddle();
   kp = 0.06;
   pid_inches(25);
   //score in middle goal
   kp = 0.067;
   pid_inches(22);
-  runlowoutake();
+  runoutake();
 }
 
 void rightside4blocknew () {
+  std::cout << "Right side new" << std::endl;
   kp = 0.057;
   tkp = 0.3;
   runIntake();
@@ -458,25 +485,99 @@ void rightside4blocknew () {
   //3rd block
   kp = 0.05;
   pid_inches(3);
-  wait(0.07, sec);
+  wait(0.05, sec);
   pid_inches(2);
   wait(0.05, sec);
-  //go to long goal
+  //go to long goal 
   turnpid(105);
-  pid_inches(31.5);
-  //tpidflag = true;
-  turnpid(161);
-  //tpidflag = false;
-  //kp = 0.057;
-  pid_inches(-16);
+  pid_inches(30.5);
+  // tkp = 0.7;
+  tpidflag = true;
+  turnpid(163);
+  tpidflag = false;
+  kp = 0.06;
+  pid_inches(-15);
+  pid_inches(2);
+  runoutake();
+  wait(0.2, sec);
   runtopintake();
-
+  wait(2.5, sec);
+  //pid_inches(20);
 }
 
-void rightside4blockshort () {
+void rightsidedescore () {
+  kp = 0.08;
+  pid_inches(10);
+  turnpid(200);
+  pid_inches(-15);
+  turnpid(163);
+  descoreup();
+  descoredown();
+  pid_inches(-16);
+}
+void rightside4push () {
+  kp = 0.057;
+  tkp = 0.3;
+  runIntake();
+  //1st and 2nd block
+  pid_inches(20);
+  //3rd block
+  kp = 0.05;
+  pid_inches(3);
+  wait(0.05, sec);
+  pid_inches(2);
+  wait(0.05, sec);
+  //go to long goal 
+  turnpid(105);
+  pid_inches(31);
+  //tpidflag = true;
+  turnpid(163);
+  //tpidflag = false;
+  //kp = 0.045;
+  //kd = 0.2;
+  pidTimeout = 1000;
+  pid_inches(-16.5);
+  //std::cout << "10 inches" << std::endl;
+  // pid_inches(-6.5);
+  //std::cout << "before long goal outtake" << std::endl;
+  //pid_inches(2);
+  runoutake();
+  wait(0.2, sec);
+  runtopintake();
+  wait(2, sec);
+  rightsidedescore();
+}
+
+void rightside4middle () {
+  kp = 0.057;
+  tkp = 0.3;
+  runBasket();
+  //1st and 2nd block
+  pid_inches(20);
+  //wait(0.07, sec);
+  //3rd block
+  runBasket();
+  kp = 0.05;
+  pid_inches(3);
+  wait(0.05, sec);
+  runBasket();
+  pid_inches(2);
+  wait(0.05, sec);
+  runBasket();
+  pid_inches(5);
+  runBasket();
+  // go to low middle goal
+  turnpid(294);
+  pid_inches(13.3);
+  runoutake();
+  // pid_inches(-2);
+  // pid_inches(2);
+  // pid_inches(-2);
+  // pid_inches(2);
+}
+void rightside4blockold () {
   kp = 0.057;
   tkp = 0.4;
-  runIntakeMiddle();
   runIntake();
   //1st block
   pid_inches(18);
@@ -494,16 +595,14 @@ void rightside4blockshort () {
   tkp = 0.35;
   turnpid(105);
   pid_inches(33);
-  turnpid(345);
+  turnpid(161);
+  pid_inches(-13);
   runtopintake();
-  pid_inches(13);
-
 }
 
 void leftside () {
   kp = 0.052;
   tkp = 0.5;
-  runIntakeMiddle();
   runIntake();
   pid_inches(22);
   stopIntake();
@@ -517,10 +616,81 @@ void leftside () {
   wait(1, sec);
 }
 
+void leftsidenew () {
+  kp = 0.057;
+  tkp = 0.3;
+  runIntake();
+  //1st and 2nd block
+  pid_inches(19.5);
+  //3rd block
+  kp = 0.05;
+  pid_inches(3);
+  wait(0.05, sec);
+  pid_inches(2);
+  wait(0.05, sec);
+  //go to long goal 
+  turnpid(262);
+  pid_inches(30.5);
+  //tpidflag = true;
+  tkp = 0.4;
+  turnpid(190);
+  turnpid(197);
+  //tpidflag = false;
+  //kp = 0.057;
+  pid_inches(-14);
+  wait(0.02, sec);
+  pid_inches(1);
+  runoutake();
+  wait(0.2, sec);
+  runtopintake();
+  wait(2.5, sec);
+  //pid_inches(20);
+}
+
 void skillsauton () {
+  kd = 0.1;
+  kp = 0.027;
+  tkp = 0.50;
+  //get balls from matchloads
+  downmatchload();
+  pid_inches(35);
+  turnpid(72);
+  // wait(1, sec);
+  runIntake();
+  pid_inches(10.3);
+  wait(4, sec);
+  pid_inches(-5);
+  //wait(30, msec);
+  //pid_inches(7.5);
+  //wait(40, msec);
+  //score in long goal
+  pid_inches(-26);
+  // turnpid(270);
+  //runoutake();
+  ///wait(10, msec);      
+  runtopintake();
+  wait(6, sec);
+  //collect 4 balls and score
+  upmatchload();
+  stopIntake();
+  pid_inches(15);
+  turnpid(160);
+  //pid_inches(23);
+  // turnpid(89);
+  // runIntake();
+  // pid_inches(11);
+  // turnpid(360);
+  // runBasket();
+  // pid_inches(-7);
+  // wait(20, msec);
+  // pid_inches(40);
+  // wait(1, sec);
+  // pid_inches(-5); 
+}
+
+void oldskillsauton () {
   kp = 0.052;
   runIntake();
-  runIntakeMiddle();
   //Get the first ball
   kp = 0.044;
   pid_inches(20);
@@ -539,59 +709,25 @@ void skillsauton () {
   stopIntake();
   turnpid(-70);
   pid_inches(13);
-  runlowoutake();
+  runoutake();
   wait(5, sec);
   stopIntake();
-  /*//Park
+  //Park
   pid_inches(-6);
   turnpid(200);
   pid_inches(27);
   turnpid(155);
   wait(0.2, sec);
-  //turnpid(350);
   pid_inches(50);
-  runIntakeMiddle();
   wait(4, sec);
   pid_inches(3);
   wait(4, sec);
-  */
-  //Go get first left ball for high middle goal
-  pid_inches(-4.5);
-  turnpid(192);
-  pid_inches(12);
-  turnpid(238);
-  runIntake();
-  runIntakeMiddle();
-  pid_inches(30);
-  wait(0.2, sec);
-  //Get second ball
-  pid_inches(5);
-  //turnpid(12);
-  //pid_inches(8);
-  //wait(0.1, sec);
-  //Score
-  turnpid(10);
-  stopIntake();
-  pid_inches(16);
-  //wait(0.15, sec);
-  //turnpid(180);
-  //pid_inches(20);
-  runIntake();
-  runmiddletop();
-  wait(5, sec);
-  pid_inches(-15);
-  stopIntake();
-  turnpid(70);
-  pid_inches(30);
-  turnpid(150);
-  //turnpid(82);
-  pid_inches(50);
-}
+}  
 
 int auton = 1;
 //auton selector
 void autonselector() {
-  int numofautons = 6;
+  int numofautons = 10;
   if (controller1.ButtonRight.pressing()) {
     auton++;
     wait(200,msec);
@@ -611,7 +747,7 @@ void autonselector() {
     controller1.Screen.print("Simple Test Auton");
   } else if (auton == 2) {
     controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,9);
+    controller1.Screen.setCursor(2,9);   
     controller1.Screen.print("Right Side");
   } else if (auton == 3) {
     controller1.Screen.clearScreen();
@@ -619,19 +755,36 @@ void autonselector() {
     controller1.Screen.print(" Right Side 4 Block");
   } else if (auton == 4) {
     controller1.Screen.clearScreen();
+    controller1.Screen.setCursor(2,5);
+    controller1.Screen.print("Right Side 4 Push");
+  } else if (auton == 5) {
+    controller1.Screen.clearScreen();
     controller1.Screen.setCursor(2,6);
     controller1.Screen.print("Right Side 4BS");
-  } else if (auton == 5) {
+  } else if (auton == 6) {
     controller1.Screen.clearScreen();
     controller1.Screen.setCursor(2,8);
     controller1.Screen.print("Left Side");
-  } else if (auton == 6) {
+  } else if (auton == 7) {
+    controller1.Screen.clearScreen();
+    controller1.Screen.setCursor(2,6);
+    controller1.Screen.print("Left Side New");
+  } else if (auton == 8) {
     controller1.Screen.clearScreen();
     controller1.Screen.setCursor(2,12);
     controller1.Screen.print("Skills");
+  } else if (auton == 9) {
+    controller1.Screen.clearScreen();
+    controller1.Screen.setCursor(2,8);
+    controller1.Screen.print("Old Skills");
+  } else if (auton == 10) {
+    controller1.Screen.clearScreen();
+    controller1.Screen.setCursor(2,8);
+    controller1.Screen.print("rightside4middle");
   }
+
 }
- 
+
  // auton
 void autonomous(void) {
   if (auton == 1) {
@@ -641,12 +794,20 @@ void autonomous(void) {
   } else if (auton == 3){
     rightside4blocknew();
   } else if (auton == 4){
-    rightside4blockshort();
+    rightside4push();
   } else if (auton == 5){
-    leftside();
+    rightside4blockold();
   } else if (auton == 6){
+    leftside();
+  } else if (auton == 7){
+    leftsidenew();
+  } else if (auton == 8){
     skillsauton();
-  } 
+  } else if (auton == 9){
+    oldskillsauton();
+  } else if (auton == 10){
+    rightside4middle();
+  }
 }
 
 /*---------------------------------------------------------------------------*/
@@ -686,43 +847,87 @@ void arcade() {
   br.spin(reverse, speedright, percent);
 }
 
+// void usercontrol(void) {
+//   // User control code here, inside the loop
+//   while (1) {
+//     arcade();
+//     intaking();
+//   // descore
+//   if (controller1.ButtonY.pressing()) {
+//       // Only toggle if we haven't already registered this specific press
+//       if (!prevdescore_up) {
+//         descore_up = !descore_up;
+//         descore.set(descore_up);
+//         prevdescore_up = true;
+//       }
+//     } 
+//     else {
+//       // ONLY reset the latch when the button is RELEASED
+//       prevdescore_up = false;
+//     }
+//   //  if (controller1.ButtonY.pressing()) {
+//   //   if (prevdescore_up == false) {
+//   //     descore_up = !descore_up;
+//   //     prevdescore_up = true;
+//   //   } else {
+//   //     if (prevdescore_up == true) {
+//   //       prevdescore_up = false;
+//   //     }
+//   //   } descore.set(descore_up);
+//     // controller1.ButtonY.released(descore_down_fn);
+//     wait(20, msec); 
+//   }
+ 
+
+//  //matchloader
+//   if (controller1.ButtonX.pressing()) {  
+//    if (!prevmatchload_down) {
+//     matchload_down = !matchload_down;
+//     matchloader.set(matchload_down);
+//     prevmatchload_down = true; 
+//     }
+//   } else {
+//    prevmatchload_down = false;
+//  } wait(20, msec); 
+// }
 void usercontrol(void) {
   // User control code here, inside the loop
   while (1) {
     arcade();
     intaking();
-  // descore
-   if (controller1.ButtonY.pressing()) {
-    if (prevdescore_up == false) {
-      descore_up = !descore_up;
-      prevdescore_up = true;
-    } else {
-      if (prevdescore_up == true) {
-        prevdescore_up = false;
+    
+    // descore
+    if (controller1.ButtonY.pressing()) {
+      // Only toggle if we haven't already registered this specific press
+      if (!prevdescore_up) {
+        descore_up = !descore_up;
+        descore.set(descore_up);
+        prevdescore_up = true;
       }
-    } descore.set(descore_up);
-    // controller1.ButtonY.released(descore_down_fn);
+    } 
+    else {
+      // ONLY reset the latch when the button is RELEASED
+      prevdescore_up = false;
+    }
+    
+    // The problematic wait(20, msec); was here. It has been removed.
+    
+    // matchloader
+    if (controller1.ButtonX.pressing()) {  
+      if (!prevmatchload_down) {
+        matchload_down = !matchload_down; 
+        matchloader.set(matchload_down);
+        prevmatchload_down = true; 
+      }
+    } else {
+      prevmatchload_down = false;
+    } 
+    
+    // Place the single wait at the very end of the while(1) loop
     wait(20, msec); 
   }
+}
  
-
- //matchloader
- if (controller1.ButtonX.pressing()) {
-    std::cout << " previous value " << prevmatchload_down << std::endl;
-    if (prevmatchload_down == false) {
-      matchload_down = !matchload_down;
-      prevmatchload_down = true;
-    } else {
-      if (prevmatchload_down == true) {
-        prevmatchload_down = false;
-      }
-    } matchloader.set(matchload_down);
-    wait(20, msec); 
-  }
-  std::cout << " matchloader " << matchload_down << std::endl;
- }
- }
-
 bool selecting = 1;
 void pre_auton(void) {
   // Initializing Robot Configuration. DO NOT REMOVE!
@@ -754,3 +959,7 @@ int main() {
   }
 }
 
+
+//void kathy () {
+//KL.spin(reverse, 67.41, pct);
+//F}

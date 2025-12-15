@@ -16,6 +16,7 @@ extern motor intake2;
 extern pneumatics descore;
 extern pneumatics matchloader;
 extern inertial inertialSensor;
+extern motor KL;
 /**
  * Used to initialize code/tasks/devices added using tools in VEXcode Pro.
  * 
