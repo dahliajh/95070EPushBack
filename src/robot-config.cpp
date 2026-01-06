@@ -22,6 +22,7 @@ motor intake2 = motor(PORT10, ratio6_1, true); // TOP INTAKE
 //motor intake3 = motor(PORT20, ratio18_1, true); // INSIDE INTAKE
 pneumatics descore = pneumatics(Brain.ThreeWirePort.D);
 pneumatics matchloader = pneumatics(Brain.ThreeWirePort.C);
+pneumatics middlegoal = pneumatics(Brain.ThreeWirePort.H);
 inertial inertialSensor = inertial(PORT5); 
 motor KL = motor(PORT21, ratio36_1, false);
 

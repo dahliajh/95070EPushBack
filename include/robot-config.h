@@ -15,6 +15,7 @@ extern motor intake2;
 //extern motor intake3;
 extern pneumatics descore;
 extern pneumatics matchloader;
+extern pneumatics middlegoal;
 extern inertial inertialSensor;
 extern motor KL;
 /**

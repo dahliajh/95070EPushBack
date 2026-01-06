@@ -58,7 +58,7 @@ bool tpidflag = false;
 double kp = 0.15; // tune this first
 double ki = 0.15; // and lastly this
 double kd = 0.13; // then this 
-double pidTimeout = 5000; // 5-second timeout
+double pidTimeout = 3000; // 5-second timeout
 
 void pid(double targetDistance) {
  double error = targetDistance;
@@ -80,23 +80,26 @@ void pid(double targetDistance) {
    prevDistanceError = measureDistance;
    if (fabs(error)<30) {
      fl.stop(coast);
-     ml.stop(coast);
-     bl.stop(coast);
-
      fr.stop(coast);
+
+     ml.stop(coast);
      mr.stop(coast);
+
+     bl.stop(coast);
      br.stop(coast);
      //std::cout << " pid # of steps: " << stepCount << std::endl;
      return;
    }
 
    if (pidTimer.time(msec) > pidTimeout) {
-      fl.stop(coast);
-      fr.stop(coast);
-      ml.stop(coast);
-      mr.stop(coast);
-      bl.stop(coast);
-      br.stop(coast);
+     fl.stop(coast);
+     fr.stop(coast);
+
+     ml.stop(coast);
+     mr.stop(coast);
+     
+     bl.stop(coast);
+     br.stop(coast);
       std::cout << " timingout of pid after msec" << pidTimeout << std::endl;
       return;
     }
@@ -131,43 +134,6 @@ double tkp = 0.5; //tune this first
 double tki = 0; //and lastly this
 double tkd = 0.3; //then this
 
-// //turn pid
-// void turnpid_orig (double targetAngle) {
-//   double error = targetAngle;
-//   double integral = 0;
-//   double lastError =  targetAngle;
-//   inertialSensor.setRotation(0, degrees);
-//   while (true) {
-//     double measureAngle = inertialSensor.rotation(degrees);
-//     error = targetAngle - measureAngle;
-//     while (error > 181) error -= 360;
-//     while (error < -181) error += 360;
-
-//     if (fabs(error)<3) {
-//       fl.stop(brake);
-//       ml.stop(brake);
-//       bl.stop(brake);
- 
-//       fr.stop(brake);
-//       mr.stop(brake);
-//       br.stop(brake);
-//       return;
-//     }
-//     double speed = error * tkp + integral * tki + (error - lastError) * tkd;
-//     fl.spin(reverse, speed, percent);
-//     ml.spin(reverse, speed, percent);
-//     bl.spin(reverse, speed, percent);
- 
-//     fr.spin(forward, speed, percent);
-//     mr.spin(forward, speed, percent);
-//     br.spin(forward, speed, percent);
- 
-//     lastError = error;
-//     wait(20, msec);
-//     std::cout<<"err: " << error<<std::endl;
-//     std::cout<<"sensor: " << inertialSensor.rotation(degrees)<<std::endl;
-//   }
-// }
 #include "vex.h"
 #include <cmath>
 
@@ -330,31 +296,30 @@ void setVelocity(double vel) {
 }
 
 void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
-   // hold blocks
+// hold blocks
   if (controller1.ButtonL1.pressing()) { 
-    intake.spin(forward, 90, pct);
+    intake.spin(forward, 95, pct);
   }
-
-// score high
-    else if (controller1.ButtonR2.pressing()) {  
-    intake.spin(forward, 90, pct);
-    intake2.spin(forward, 90, pct);
-
-  }
-  
-// score in basket (not needed anymore cuz new bot)
-  // else if (controller1.ButtonL1.pressing()) { 
-  //   intake.spin(forward, 85, pct);
-  //   //intake3.spin(forward, 85, pct);
-  
-  // }
-
- //score bottom/outtake
+//score bottom/outtake
     else if (controller1.ButtonL2.pressing()) {
-    intake.spin(reverse, 90, pct);
-    intake2.spin(reverse, 90, pct);
+    intake.spin(reverse, 95, pct);
+    intake2.spin(reverse, 95, pct);
     //intake3.spin(reverse, 85, pct);
   }
+// score middle goal
+    else if (controller1.ButtonR1.pressing()) {  
+    intake.spin(forward, 95, pct);
+    intake2.spin(reverse, 95, pct);
+
+  }
+  
+//score high
+  else if (controller1.ButtonR2.pressing()) { 
+    intake.spin(forward, 95, pct);
+    intake2.spin(forward, 95, pct);
+  
+  }
+ 
     else {
     intake.stop(brake);
     intake2.stop(brake);
@@ -381,10 +346,11 @@ void matchload_up_fn () {
 
 void runIntake () {
   intake.spin(forward, 95, pct);
+  intake2.stop(coast);
 }
 
 void runBasket () {
-  intake.spin(forward, 90, pct);
+  intake.spin(forward, 95, pct);
   //intake3.spin(forward, 90, pct);
 }
 
@@ -399,12 +365,12 @@ void runtopintake () {
 }
 
 void runoutake () {
-  intake.spin(reverse, 90, pct);
-  intake2.spin(reverse, 90, pct);
+  intake.spin(reverse, 95, pct);
+  intake2.spin(reverse, 95, pct);
 }
 void runmiddletop () {
-  intake.spin(forward, 90, pct);
-  intake2.spin(reverse, 90, pct);
+  intake.spin(forward, 95, pct);
+  intake2.spin(reverse, 95, pct);
   //intake3.spin(reverse, 90, pct);
 }
 
@@ -428,11 +394,10 @@ void descoredown () {
   descore.set(false);
 }
 void simpletestauton () {
-  kp = 0.057;
-  // kd = 0.3;
-  pid_inches(20);
-  //turnpid(90);
-  //pid_inches(20);
+  kp = 0.05;
+  pid_inches(30);
+  wait(1, sec);
+  pid_inches(-30);
 }
 
 void rightside () { 
@@ -506,10 +471,12 @@ void rightside4blocknew () {
 }
 
 void rightsidedescore () {
-  kp = 0.08;
+  kp = 0.09;
+  kd = 0.1;
+  runIntake();
   pid_inches(10);
   turnpid(200);
-  pid_inches(-15);
+  pid_inches(-13);
   turnpid(163);
   descoreup();
   descoredown();
@@ -526,26 +493,31 @@ void rightside4push () {
   pid_inches(3);
   wait(0.05, sec);
   pid_inches(2);
-  wait(0.05, sec);
+  wait(0.07, sec);
   //go to long goal 
-  turnpid(105);
-  pid_inches(31);
+  turnpid(90);
+  pid_inches(28.5);
   //tpidflag = true;
   turnpid(163);
   //tpidflag = false;
   //kp = 0.045;
   //kd = 0.2;
   pidTimeout = 1000;
-  pid_inches(-16.5);
+  pid_inches(-7);
   //std::cout << "10 inches" << std::endl;
   // pid_inches(-6.5);
   //std::cout << "before long goal outtake" << std::endl;
   //pid_inches(2);
-  runoutake();
-  wait(0.2, sec);
+  // runoutake();
+  // wait(0.2, sec);
   runtopintake();
   wait(2, sec);
+  //descore part
   rightsidedescore();
+  //my idea for fixing getting the blocks stuck: 
+  //create something that says if the intake doesn't give you an output, 
+  //it will have to run the outtake function and then rerun the intake function 
+  // and we use the timeout to make sure that it doesnt keep doing this for too long
 }
 
 void rightside4middle () {
@@ -616,6 +588,53 @@ void leftside () {
   wait(1, sec);
 }
 
+void leftsidedescore () {
+  pid_inches(10);
+  turnpid(210);
+  pid_inches(-15);
+  pid_inches(190);
+}
+
+void leftside7block () {
+  kp = 0.057;
+  tkp = 0.3;
+  runIntake();
+  //1st and 2nd block
+  kp = 0.05;
+  pid_inches(19.5);
+  //3rd block
+  pid_inches(3);
+  //wait(0.05, sec);
+  pid_inches(2);
+  //wait(0.05, sec);
+  //go to long goal 
+  turnpid(262);
+  pid_inches(32);
+  //tpidflag = true;
+  tkp = 0.25;
+  turnpid(210);
+  //tpidflag = false;
+  pidTimeout = 1000;
+  pid_inches(-15);
+  //wait(0.02, sec);
+  runtopintake();
+  wait(1, sec);
+  // force alignment to straighten the bot before going to matchload
+  pid_inches(2);
+  pidTimeout = 3000;
+  // matchload
+  kp = 0.067;
+  downmatchload();
+  runIntake();
+  pid_inches(20);
+  turnpid(200);
+  pid_inches(6.7);
+  wait(0.567, sec);
+  kp = 0.05;
+  pid_inches(-26);
+  turnpid(210);
+  runtopintake();
+}
 void leftsidenew () {
   kp = 0.057;
   tkp = 0.3;
@@ -632,16 +651,14 @@ void leftsidenew () {
   turnpid(262);
   pid_inches(30.5);
   //tpidflag = true;
-  tkp = 0.4;
+  tkp = 0.25;
   turnpid(190);
-  turnpid(197);
   //tpidflag = false;
   //kp = 0.057;
   pid_inches(-14);
   wait(0.02, sec);
-  pid_inches(1);
-  runoutake();
-  wait(0.2, sec);
+  // runoutake();
+  // wait(0.2, sec);
   runtopintake();
   wait(2.5, sec);
   //pid_inches(20);
@@ -651,83 +668,146 @@ void skillsauton () {
   kd = 0.1;
   kp = 0.027;
   tkp = 0.50;
-  //get balls from matchloads
+//get balls from matchloads
   downmatchload();
-  pid_inches(35);
-  turnpid(72);
+  pid_inches(34);
+  turnpid(70);
   // wait(1, sec);
   runIntake();
-  pid_inches(10.3);
+  kp = 0.06;
+  pid_inches(9);
   wait(4, sec);
   pid_inches(-5);
-  //wait(30, msec);
+  wait(100, msec);
+  pid_inches(6);
+  wait(4, sec);
+  pid_inches(-5);
+  kp = 0.027;
   //pid_inches(7.5);
   //wait(40, msec);
-  //score in long goal
-  pid_inches(-26);
-  // turnpid(270);
-  //runoutake();
-  ///wait(10, msec);      
+//score in long goal
+  pid_inches(-22);
+  turnpid(95);
+  pid_inches(-2);
+  //pid_inches(8);
+  //turnpid(90);
+  ///kp = 0.06;
+  //pid_inches(-8);
+  //kp = 0.027;
+  runoutake();
+  wait(0.3, sec);      
   runtopintake();
-  wait(6, sec);
-  //collect 4 balls and score
+  wait(4, sec);
+//collect 4 balls and score
   upmatchload();
   stopIntake();
-  pid_inches(15);
-  turnpid(160);
-  //pid_inches(23);
-  // turnpid(89);
-  // runIntake();
-  // pid_inches(11);
-  // turnpid(360);
-  // runBasket();
-  // pid_inches(-7);
+  pid_inches(17);
+  tkp = 0.2;
+  turnpid(222);
+  upmatchload();
+  runIntake();
+  pid_inches(27);
+  wait(1, sec);
+  pid_inches(20);
+  runoutake();
+  wait(2, sec);
+////Park
+  pid_inches(-21);
+  turnpid(270);
+  //runBasket();
+  pid_inches(-33);
+  turnpid(170);
+  //runBasket();
   // wait(20, msec);
-  // pid_inches(40);
+  kp = 0.075;
+  pid_inches(53);
   // wait(1, sec);
   // pid_inches(-5); 
 }
 
 void oldskillsauton () {
-  kp = 0.052;
+  kd = 0.1;
+  kp = 0.027;
+  tkp = 0.5;
+  //get balls from matchloads
+  downmatchload();
+  pid_inches(34);
+  turnpid(78.5);
+  // wait(1, sec);
   runIntake();
-  //Get the first ball
-  kp = 0.044;
-  pid_inches(20);
-  wait(0.1, sec);
-  //Get the second ball
+  kd = 0.02;
+  pid_inches(10);
+  wait(4, sec);
   pid_inches(-5);
-  turnpid(12);
-  pid_inches(8);
-  wait(0.1, sec);
-  //Get the last two balls
-  turnpid(-17);
-  pid_inches(3);
-  wait(0.15, sec);
-  pid_inches(5);
-  //Go to lowmid goal
-  stopIntake();
-  turnpid(-70);
-  pid_inches(13);
+  wait(500, msec);
+  pid_inches(9);
+  wait(4, sec);
+  pid_inches(-5);
+  kd = 0.07;
+  //wait(30, msec);
+  //pid_inches(7.5);
+  //wait(40, msec);
+  //score in long goal
+  pid_inches(-22);
+  //pid_inches(8);
+  //turnpid(90);
+  ///kp = 0.06;
+  //pid_inches(-8);
+  //kp = 0.027;
   runoutake();
-  wait(5, sec);
+  wait(300, msec);      
+  runtopintake();
+  wait(6, sec);
+  //collect 4 balls and score
+  upmatchload();
   stopIntake();
-  //Park
-  pid_inches(-6);
-  turnpid(200);
-  pid_inches(27);
-  turnpid(155);
-  wait(0.2, sec);
+  pid_inches(19);
+  tkp = 0.2;
+  turnpid(222);
+  upmatchload();
+  runIntake();
+  pid_inches(26);
+  wait(1, sec);
+  pid_inches(21);
+  //turnpid(222);
+  //turnpid(240);
+  runoutake();
+  wait(2, sec);
+  //Step 3!!
+  pid_inches(-22);
+  turnpid(180);
   pid_inches(50);
+  turnpid(75);
+  pid_inches(32);
+  turnpid(180);
+  pid_inches(22);
+  turnpid(77);
+  /*downmatchload();
+  runIntake();
+  pid_inches(7);
   wait(4, sec);
-  pid_inches(3);
-  wait(4, sec);
+  pid_inches(-27);
+  stopIntake();
+  runoutake();
+  wait(500, msec);
+  runtopintake();*/
+}
+
+void skillsautonpark() {
+  kp = 0.1;
+  kd = 0.05;
+  runIntake();
+  pid_inches(-15);
+  pid_inches(45);
+  wait(1.5, sec);
+  pid_inches(-10);
+  pid_inches(10);
 }  
 
 int auton = 1;
 //auton selector
 void autonselector() {
-  int numofautons = 10;
+  int numofautons = 12;
   if (controller1.ButtonRight.pressing()) {
     auton++;
     wait(200,msec);
@@ -771,16 +851,24 @@ void autonselector() {
     controller1.Screen.print("Left Side New");
   } else if (auton == 8) {
     controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,12);
-    controller1.Screen.print("Skills");
+    controller1.Screen.setCursor(2,8);
+    controller1.Screen.print("Left Side 7");
   } else if (auton == 9) {
     controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,8);
-    controller1.Screen.print("Old Skills");
+    controller1.Screen.setCursor(2,12);
+    controller1.Screen.print("Skills");
   } else if (auton == 10) {
     controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,8);
+    controller1.Screen.setCursor(2,10);
+    controller1.Screen.print("Old Skills");
+  } else if (auton == 11) {
+    controller1.Screen.clearScreen();
+    controller1.Screen.setCursor(2,6);
     controller1.Screen.print("rightside4middle");
+  } else if (auton == 12) {
+    controller1.Screen.clearScreen();
+    controller1.Screen.setCursor(2,8);
+    controller1.Screen.print("Skills Park");
   }
 
 }
@@ -802,11 +890,15 @@ void autonomous(void) {
   } else if (auton == 7){
     leftsidenew();
   } else if (auton == 8){
-    skillsauton();
+    leftside7block();
   } else if (auton == 9){
-    oldskillsauton();
+    skillsauton();
   } else if (auton == 10){
+    oldskillsauton();
+  } else if (auton == 11){
     rightside4middle();
+  } else if (auton == 12){
+    skillsautonpark();
   }
 }
 
