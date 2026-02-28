@@ -60,7 +60,7 @@ bool prevmiddlegoal_down = true;
 double kp = 0.15; // tune this first
 double ki = 0.15; // and lastly this
 double kd = 0.13; // then this 
-double pidTimeout = 3000; // 3-second timeout
+double pidTimeout = 3000; // 5-second timeout
 
 void pid(double targetDistance) {
  double error = targetDistance;
@@ -111,20 +111,14 @@ void pid(double targetDistance) {
    //std::cout<<"speed: " << speed<< " error: " << error << " p: " << error * kp << " d: " << (error - lastError) * kd << std::endl;
   
    stepCount = stepCount + 1;
-
-    fr.spin(forward, speed, percent);
-    mr.spin(forward, speed, percent);
-    br.spin(forward, speed, percent);
-
-  // if(pidTimer.value() < 0.75) {
-  //   speed = speed * 1.1;
-  // }
   fl.spin(forward, speed, percent);
+  fr.spin(forward, speed, percent);
+
   ml.spin(forward, speed, percent);
+  mr.spin(forward, speed, percent);
+
   bl.spin(forward, speed, percent);
-
-
- 
+  br.spin(forward, speed, percent);
 
    lastError = error;
    wait(15, msec);
@@ -228,16 +222,6 @@ void turnpid(double targetAngle) {
 
 }
 
-void moveAllWheels(int SpeedLeft, int SpeedRight) {
-  fl.spin(reverse, SpeedLeft + SpeedRight, percent);
-  ml.spin(reverse, SpeedLeft + SpeedRight, percent);
-  bl.spin(reverse, SpeedLeft + SpeedRight, percent);
-  
-  fr.spin(forward, SpeedLeft - SpeedRight, percent);
-  mr.spin(forward, SpeedLeft - SpeedRight, percent);
-  br.spin(forward, SpeedLeft + SpeedRight, percent);
-}
-
 void stopWheels () {
   fl.stop(brake);
   ml.stop(brake);
@@ -246,49 +230,6 @@ void stopWheels () {
   fr.stop(brake);
   mr.stop(brake);
   br.stop(brake);
-}
-
-  //turn left
-  void turnLeft(double angle) {
-  // basically the same as right except left motor spins reverse and right is forward
-  inertialSensor.setRotation(0, degrees);
-  //turning left using inertial sensor
-    while (fabs(inertialSensor.rotation(deg)) < angle) {
-      double diff =  angle - fabs(inertialSensor.rotation(deg));
-      // 5 + diff * 0.3 ,pct means to slow down when reaching the precent target.
-      //You have to remember to set the minimum speed to 5 so it does not slowly move
-      fl.spin(reverse, 5 + diff * 0.3, pct);
-      ml.spin(reverse, 5 + diff * 0.3, pct);
-      bl.spin(forward, 5 + diff * 0.3, pct);
-      
-      fr.spin(forward, 5 + diff * 0.3, pct);
-      mr.spin(forward, 5 + diff * 0.3, pct);
-      br.spin(forward, 5 + diff * 0.3, pct);
-    
-      wait(5, msec);
-    }
-    stopWheels();
-  }
-  
-  
-//turn right
-void turnRight(double angle) {
-  // set inertial rotation to 0 degrees
-  inertialSensor.setRotation(0, degrees);
-  //turn right using inertial sensors
-  while (inertialSensor.rotation(deg) < angle) {
-    double diff =  angle - fabs(inertialSensor.rotation(deg));
-    fl.spin(forward, 5 + diff * 0.3, pct);
-    ml.spin(forward, 5 + diff * 0.3, pct);
-    bl.spin(forward, 5 + diff * 0.3, pct);
-
-    fr.spin(reverse, 5 + diff * 0.3, pct);
-    mr.spin(reverse, 5 + diff * 0.3, pct);
-    br.spin(reverse, 5 + diff * 0.3, pct);
-
-    wait(5, msec);
-  }
-  stopWheels();
 }
 
 //set velocity
@@ -318,16 +259,12 @@ void intaking() { /// PUT ALL SCORING IN THE SAME FUNCTION
     else if (controller1.ButtonR1.pressing()) {  
     intake.spin(forward, 95, pct);
     intake2.spin(reverse, 95, pct);
-
   }
-  
 //score high
   else if (controller1.ButtonR2.pressing()) { 
     intake.spin(forward, 95, pct);
     intake2.spin(forward, 95, pct);
-  
   }
- 
     else {
     intake.stop(brake);
     intake2.stop(brake);
@@ -339,7 +276,6 @@ void descore_up_fn () {
   descore.set(false);
   std::cout << " descore_up " << std::endl;
 }
-
 void descore_down_fn () {
   descore.set(true);
   std::cout << " descore_down " << std::endl;
@@ -365,7 +301,7 @@ void runBasket () {
 
 void stopIntake () {
   intake.stop(coast);
-  intake2.stop(coast);
+  //intake3.stop(coast);
 }
 
 void runtopintake () {
@@ -378,20 +314,10 @@ void runoutake () {
   intake2.spin(reverse, 95, pct);
 }
 
-void runmiddletop () {
-  intake.spin(forward, 95, pct);
-  intake2.spin(reverse, 95, pct);
-  //intake3.spin(reverse, 90, pct);
-}
-
-void middlegoaldown () {
-  middlegoal.set(true);
-}
-
-void middlegoalup () {
+void middlegoal_fn () {
   middlegoal.set(false);
+  intake.spin(forward, 95, pct);
 }
-
 void stoptopintake () {
   intake2.stop(coast);
 }
@@ -412,45 +338,6 @@ void descoredown () {
   descore.set(false);
 }
 
-void simpletestauton () {
-  kp = 0.05;
-  for (int i = 0; i < 20; i++) {
-    pid_inches(-3);
-    wait(1, sec);
-  }
-}
-
-void rightside4blocknew () {
-  std::cout << "Right side new" << std::endl;
-  kp = 0.057;
-  tkp = 0.3;
-  runIntake();
-  //1st and 2nd block
-  pid_inches(20);
-  //wait(0.07, sec);
-  //3rd block
-  kp = 0.05;
-  pid_inches(3);
-  wait(0.05, sec);
-  pid_inches(2);
-  wait(0.05, sec);
-  //go to long goal 
-  turnpid(105);
-  pid_inches(30.5);
-  // tkp = 0.7;
-  tpidflag = true;
-  turnpid(163);
-  tpidflag = false;
-  kp = 0.06;
-  pid_inches(-15);
-  pid_inches(2);
-  runoutake();
-  wait(0.2, sec);
-  runtopintake();
-  wait(2.5, sec);
-  //pid_inches(20);
-}
-
 void rightsidedescore () {
   kp = 0.09;
   kd = 0.1;
@@ -461,37 +348,30 @@ void rightsidedescore () {
   turnpid(163);
   descoreup();
   descoredown();
-  pid_inches(-14);
+  pid_inches(-16);
 }
-
 void rightside4push () {
   kp = 0.057;
   tkp = 0.3;
   runIntake();
   //1st and 2nd block
   pid_inches(20);
-  //3rd block=
-  // kp = 0.05;
-  pid_inches(7);
+  //3rd block
+  kp = 0.05;
+  pid_inches(3);
   wait(0.05, sec);
+  pid_inches(2);
+  wait(0.07, sec);
   //go to long goal 
-  turnpid(98);
-  pid_inches(28);
+  turnpid(90);
+  pid_inches(28.5);
   //tpidflag = true;
   turnpid(163);
   //tpidflag = false;
-  //kp = 0.045;
-  //kd = 0.2;
   pidTimeout = 1000;
   pid_inches(-7);
-  //std::cout << "10 inches" << std::endl;
-  // pid_inches(-6.5);
-  //std::cout << "before long goal outtake" << std::endl;
-  //pid_inches(2);
-  // runoutake();
-  // wait(0.2, sec);
   runtopintake();
-  wait(2.2, sec);
+  wait(2, sec);
   //descore part
   rightsidedescore();
 }
@@ -518,107 +398,28 @@ void rightside4middle () {
   turnpid(294);
   pid_inches(13.3);
   runoutake();
-  // pid_inches(-2);
-  // pid_inches(2);
-  // pid_inches(-2);
-  // pid_inches(2);
-}
-
-void leftside22 () {
-  kp = 0.057;
-  tkp = 0.3;
-  runIntake();
-  //-- 1st and 2nd block --
-  kp = 0.05;
-  pid_inches(19.5);
-  // -- 3rd block --
-  pid_inches(3);
-  //wait(0.05, sec);
-  pid_inches(3);
-  //wait(0.05, sec);
-  // -- go to middle goal --
-  pid_inches(6);
-  turnpid(250);
-  pid_inches(-13);
-  middlegoaldown();
-  wait(0.2, sec);
-  runtopintake();
-  wait(0.8, sec);
-  stopIntake();
-  // -- go to long goal -- 
-  pid_inches(45);
-  middlegoalup();
-  turnpid(196);
-  pidTimeout = 750;
-  pid_inches(-10);
-  runtopintake();
-}
-
-void leftside43 () {
-  kp = 0.057;
-  tkp = 0.3;
-  tkd = 0.1;
-  // -- matchloader --
-  pid_inches(30);
-  kp = 0.07;
-  turnpid(270);
-  downmatchload();
-  pid_inches(-2);
-  runIntake();
-  pid_inches(5.5);
-  wait(0.2, sec);
-  // pid_inches(-3);
-  // pid_inches(3);
-  // wait(0.4, sec);
-  // -- go to long goal --
-  kd = 0.08;
-  pidTimeout = 1600;
-  pid_inches(-27);
-  pidTimeout = 3000;
-  kd = 0.13;
-  runtopintake();
-  wait(1, sec);
-  upmatchload();
-  stopIntake();
-  // -- intake 3 blocks in center -- 
-  tkd = 0.3;
-  pid_inches(14.5);
-  turnpid(135);
-  runIntake();
-  kp = 0.045;
-  pid_inches(25);
-  pid_inches(15);
-  // -- score blocks in long goal --
-  tkp = 0.4;
-  tkd = 0.1;
-  kp = 0.07;
-  kd = 0.1;
-  turnpid(305);
-  pid_inches(-12);
-  middlegoaldown();
-  runtopintake();
 }
 
 void leftside7block () {
   kp = 0.057;
   tkp = 0.3;
   runIntake();
-  //-- 1st and 2nd block --
+  //1st and 2nd block
   kp = 0.05;
   pid_inches(19.5);
-  // -- 3rd block --
+  //3rd block
   pid_inches(3);
   //wait(0.05, sec);
-  pid_inches(3);
+  pid_inches(2);
   //wait(0.05, sec);
-  // -- go to long goal --
+  //go to long goal 
   turnpid(262);
-  pid_inches(34);
+  pid_inches(32);
   //tpidflag = true;
   tkp = 0.25;
-  // align with long goal
   turnpid(210);
-  pidTimeout = 1300;
+  //tpidflag = false;
+  pidTimeout = 1000;
   pid_inches(-15);
   //wait(0.02, sec);
   runtopintake();
@@ -626,139 +427,24 @@ void leftside7block () {
   // force alignment to straighten the bot before going to matchload
   pid_inches(2);
   pidTimeout = 3000;
-  // -- matchload --
-  // kp = 0.067;
-  // downmatchload();
-  // runIntake();
-  // pid_inches(20);
-  // turnpid(200);
-  // pid_inches(6.7);
-  // wait(0.567, sec);
-  // kp = 0.05;
-  // pid_inches(-26);
-  // turnpid(210);
-  // runtopintake();
-}
-
-void leftsidenew () {
-  kp = 0.057;
-  tkp = 0.3;
-  runIntake();
-  //1st and 2nd block
-  pid_inches(19.5);
-  //3rd block
-  kp = 0.05;
-  pid_inches(3);
-  wait(0.05, sec);
-  pid_inches(2);
-  wait(0.05, sec);
-  //go to long goal 
-  turnpid(262);
-  pid_inches(30.5);
-  //tpidflag = true;
-  tkp = 0.25;
-  turnpid(190);
-  //tpidflag = false;
-  //kp = 0.057;
-  pid_inches(-14);
-  wait(0.02, sec);
-  // runoutake();
-  // wait(0.2, sec);
-  runtopintake();
-  wait(2.5, sec);
-  //pid_inches(20);
-}
-
-void skillsauton () {
-  kd = 0.1;
-  kp = 0.027;
-  tkp = 0.50;
-  // -- get balls from matchloads --
+  // matchload
+  kp = 0.067;
   downmatchload();
-  pid_inches(34.5);
-  wait(300, msec);
-  tkp = 0.2;
-  turnpid(94);
-  wait(300, msec);
-  tkp = 0.5;
   runIntake();
-  //1
-  kp = 0.06;
-  pid_inches(10.8);
-  wait(1, sec);
-  pid_inches(-5);
-  //2
-  pid_inches(6);
-  wait(1, sec);
-  pid_inches(-5);
-  //3
+  pid_inches(20);
+  turnpid(200);
+  pid_inches(6.7);
+  wait(0.567, sec);
+  kp = 0.05;
+  pid_inches(-26);
+  turnpid(210);
   runtopintake();
-  wait(0.34, sec);
-  runIntake();
-  pid_inches(5.5);
-  wait(1, sec);
-  pid_inches(-5);
-  kp = 0.037;
-  //pid_inches(7.5);
-  //wait(40, msec);
-  // -- score in long goal --
-  pid_inches(-20);
-  turnpid(95);
-  pidTimeout = 750;
-  pid_inches(-4);
-  pidTimeout = 3000;
-  //pid_inches(8);
-  //turnpid(90);
-  ///kp = 0.06;
-  //pid_inches(-8);
-  //kp = 0.027;
-  runoutake();
-  wait(0.3, sec);      
-  runtopintake();
-  wait(5, sec);
-  // -- collect 4 balls and score --
-  upmatchload();
-  stopIntake();
-  pid_inches(11);
-  tkp = 0.2;
-  turnpid(218);
-  upmatchload();
-  runIntake();
-  pid_inches(27);
-  wait(1, sec);
-  pid_inches(14);
-  runoutake();
-  wait(2, sec);
-  //// -- Park --
-  pid_inches(-21);
-  turnpid(270);
-  //runBasket();
-  pid_inches(-33);
-  turnpid(170);
-  //runBasket();
-  // wait(20, msec);
-  kp = 0.07;
-  pid_inches(52);
-  // wait(1, sec);
-  pid_inches(-3); 
-  runoutake();
 }
-
-void skillsautonpark() {
-  kp = 0.1;
-  kd = 0.05;
-  runIntake();
-  pid_inches(-15);
-  pid_inches(45);
-  wait(1.5, sec);
-  pid_inches(-10);
-  pid_inches(10);
-}  
 
 int auton = 1;
 //auton selector
 void autonselector() {
-  int numofautons = 10;
+  int numofautons = 12;
   if (controller1.ButtonRight.pressing()) {
     auton++;
     wait(200,msec);
@@ -775,72 +461,27 @@ void autonselector() {
   if (auton == 1) {
     controller1.Screen.clearScreen();
     controller1.Screen.setCursor(2,4);
-    controller1.Screen.print("Simple Test Auton");
+    controller1.Screen.print("rightside4push");
   } else if (auton == 2) {
     controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,4);
-    controller1.Screen.print(" Right Side 4 Block");
+    controller1.Screen.setCursor(2,9);   
+    controller1.Screen.print("leftside7block");
   } else if (auton == 3) {
     controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,5);
-    controller1.Screen.print("Right Side 4 Push");
-  } else if (auton == 4) {
-    controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,6);
-    controller1.Screen.print("Left Side New");
-  } else if (auton == 5) {
-    controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,8);
-    controller1.Screen.print("Left Side 7");
-  } else if (auton == 6) {
-    controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,12);
-    controller1.Screen.print("Skills");
-  } else if (auton == 7) {
-    controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,6);
+    controller1.Screen.setCursor(2,7);
     controller1.Screen.print("rightside4middle");
-  } else if (auton == 8) {
-    controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,8);
-    controller1.Screen.print("Skills Park");
-  } else if (auton == 9) {
-    controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,7);
-    controller1.Screen.print("leftside 2+2");
-  } else if (auton == 10) {
-    controller1.Screen.clearScreen();
-    controller1.Screen.setCursor(2,7);
-    controller1.Screen.print("leftside 4+3");
-  }
-
+  } 
 }
-
  // auton
 void autonomous(void) {
-  if (auton == 1) {
-    simpletestauton();
-  } else if (auton == 2){
-    rightside4blocknew();
-  } else if (auton == 3){
+   if (auton == 1){
     rightside4push();
-  } else if (auton == 4){
-    leftsidenew();
-  } else if (auton == 5){
+  } else if (auton == 2){
     leftside7block();
-  } else if (auton == 6){
-    skillsauton();
-  } else if (auton == 7){
+  }  else if (auton == 3){
     rightside4middle();
-  } else if (auton == 8){
-    skillsautonpark();
-  } else if (auton == 9){
-    leftside22();
-  } else if (auton == 10){
-    leftside43();
   }
 }
-
 /*---------------------------------------------------------------------------*/
 /*                                                                           */
 /*                              User Control Task                            */
@@ -853,10 +494,6 @@ void autonomous(void) {
 
 //arcade code
 void arcade() {
-
-  // double speedleft = controller1.Axis1.value() * 0.75 + controller1.Axis3.value() * 0.75;
-  // double speedright = controller1.Axis1.value() * 0.75 - controller1.Axis3.value() * 0.75;
-  
   double axis1_value = controller1.Axis1.value();
    if (controller1.Axis1.value() > -10 && controller1.Axis1.value() < 10)
   { axis1_value = 0; }
@@ -878,49 +515,6 @@ void arcade() {
   br.spin(reverse, speedright, percent);
 }
 
-// void usercontrol(void) {
-//   // User control code here, inside the loop
-//   while (1) {
-//     arcade();
-//     intaking();
-//   // descore
-//   if (controller1.ButtonY.pressing()) {
-//       // Only toggle if we haven't already registered this specific press
-//       if (!prevdescore_up) {
-//         descore_up = !descore_up;
-//         descore.set(descore_up);
-//         prevdescore_up = true;
-//       }
-//     } 
-//     else {
-//       // ONLY reset the latch when the button is RELEASED
-//       prevdescore_up = false;
-//     }
-//   //  if (controller1.ButtonY.pressing()) {
-//   //   if (prevdescore_up == false) {
-//   //     descore_up = !descore_up;
-//   //     prevdescore_up = true;
-//   //   } else {
-//   //     if (prevdescore_up == true) {
-//   //       prevdescore_up = false;
-//   //     }
-//   //   } descore.set(descore_up);
-//     // controller1.ButtonY.released(descore_down_fn);
-//     wait(20, msec); 
-//   }
- 
-
-//  //matchloader
-//   if (controller1.ButtonX.pressing()) {  
-//    if (!prevmatchload_down) {
-//     matchload_down = !matchload_down;
-//     matchloader.set(matchload_down);
-//     prevmatchload_down = true; 
-//     }
-//   } else {
-//    prevmatchload_down = false;
-//  } wait(20, msec); 
-// }
 void usercontrol(void) {
   // User control code here, inside the loop
   while (1) {
@@ -929,7 +523,6 @@ void usercontrol(void) {
     
     // descore
     if (controller1.ButtonY.pressing()) {
-      // Only toggle if we haven't already registered this specific press
       if (!prevdescore_up) {
         descore_up = !descore_up;
         descore.set(descore_up);
@@ -938,11 +531,8 @@ void usercontrol(void) {
       } else {
       // ONLY reset the latch when the button is RELEASED
       prevdescore_up = false;
-    }
-    
-    // The problematic wait(20, msec); was here. It has been removed.
-    
-    // middlegoal
+    } 
+    // matchloader
     if (controller1.ButtonX.pressing()) {  
       if (!prevmatchload_down) {
         matchload_down = !matchload_down; 
@@ -952,26 +542,16 @@ void usercontrol(void) {
       } else {
       prevmatchload_down = false;
     } 
-    // Corrected Middle Goal Toggle
+    //middle goal
     if (controller1.ButtonB.pressing()) {  
       if (!prevmiddlegoal_down) {
         middlegoal_down = !middlegoal_down; 
         middlegoal.set(middlegoal_down);
-        prevmiddlegoal_down = true; // Mark as pressed so it doesn't loop
+        prevmiddlegoal_down = true;
         }
       } else {
-    prevmiddlegoal_down = false; // Reset when button is released
+    prevmiddlegoal_down = false;
     }
-    // if (controller1.ButtonB.pressing()) {  
-    //   if (!prevmiddlegoal_down) {
-    //     middlegoal_down = !middlegoal_down; 
-    //     middlegoal.set(middlegoal_down);
-    //     prevmiddlegoal_down = false; 
-    //     }
-    //   } else {
-    //   prevmiddlegoal_down = true;
-    // } 
-    // Place the single wait at the very end of the while(1) loop
     wait(20, msec); 
   }
 }
@@ -1006,5 +586,3 @@ int main() {
     wait(100, msec);
   }
 }
-
-
